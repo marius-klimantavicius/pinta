@@ -1,0 +1,69 @@
+2014-02-18
+	+ [Code] Change arguments to be an array
+	+ [*] Add simple block allocator
+
+2014-02-24
+	+ [Platform] Add platform abstraction layer for most common functions
+
+2014-03-05
+	+ [*] Add Buffer type to be used as MemoryStream
+	+ [Code] Add formatting function
+	+ [Code] Add internal function support
+	+ [*] Replace pinta_asserts with custom pinta_asserts (pinta_pinta_assert?)
+	* [Tests] Replace sput framework with custom (we sometimes need to stop test on failure because otherwise it might fail with native exception [eg access violation])
+	+ [String] Maybe rewrite to use Unicode strings instead of u8 (ascii)
+
+2014-03-06
+	+ [*] Replace defines with enums
+
+2014-03-13
+	* [*] Add tracing
+	- [Core] Add cross heap movement	
+	- [Core] Add new heap alloc from native memory
+
+2014-03-20
+	+ [Decimal] Replace decNumber with fixed integer-based decimals
+	* [Strings] Remove substring and multistring types
+
+2015-01-20
+    *+ [*] Modules (exports, CommonJS)
+    *+ [*] Compression (miniz, etc)
+    + [Parser] Use jint parser
+    * [Code] Generator functions
+    - [Core] Native object - PINTA_KIND_NATIVE_OBJECT - not really possible, just a normal object with overriden get/set?
+    * [Code/Parser] let scoping, ecmascript 6 features
+    *+ [*] Object creation, constructors
+
+2015-01-24
+    * [Code] Exceptions
+
+2015-01-29
+    * [*] Debugging, dump, execution suspension
+
+2015-08-26
+    * [Core] Stack based locals+arguments, closure only actually needed variables
+
+2015-11-17
+    + [Core] Use custom wchar of size 2 to prevent wchar size differences between architectures/compilers
+    * [Core] Resumable functions or return value from execution to maybe call later
+
+2015-11-24
+    - [Code] Change functions to return a kind of promise with possible managed function to call, so native functions would immediately be resolved and return no managed function to execute.
+              Opted to directly modify PintaThread stack for such cases.
+2016-07-19
+    + [Code] Change functions to either return a direct value or push a stack frame for managed functions and set a corresponding flag
+
+2016-11-08
+    + [Code/Parser] Add PINTA_CODE_MATCH to allow simple string matching, replace most common match patterns to Match instruction
+
+2017-08-09
+    + [Core] Add GC handle infrastructure for real interop
+
+2017-08-15
+    * [Core] Reduce stack frame size
+
+2018-05-01
+    + [*] Use 16-bit wchars
+
+2019-03-10
+    * [Compiler] Add symbols to help with debugging, extend debugger

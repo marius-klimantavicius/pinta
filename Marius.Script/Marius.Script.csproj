@@ -1,0 +1,196 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProductVersion>9.0.30729</ProductVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>{16444E2E-1D8B-4AE0-89D3-E6F098D26EB0}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Marius.Script</RootNamespace>
+    <AssemblyName>Marius.Script</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ToolsPath>..\Tools\</ToolsPath>
+    <FileUpgradeFlags>
+    </FileUpgradeFlags>
+    <OldToolsVersion>3.5</OldToolsVersion>
+    <UpgradeBackupLocation />
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>TRACE;DEBUG;NET_4_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE;NET_4_0</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core">
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions">
+    </Reference>
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="$(SolutionDir)Tools\gppg\project\ShiftReduceParser\ShiftReduceParserCode.cs">
+      <Link>Parsing\ShiftReduceParserCode.cs</Link>
+    </Compile>
+    <Compile Include="Pinta\PintaArrayReference.cs" />
+    <Compile Include="Pinta\PintaAssignment.cs" />
+    <Compile Include="Pinta\PintaCollectFunctionsAndVariables.cs" />
+    <Compile Include="Pinta\PintaLoopLabel.cs" />
+    <Compile Include="Pinta\PintaNameReference.cs" />
+    <Compile Include="Pinta\PintaBackend.cs" />
+    <Compile Include="Pinta\PintaCompiler.cs" />
+    <Compile Include="Pinta\Reflection\PintaAggregateNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaBinaryWriter.cs" />
+    <Compile Include="Pinta\Reflection\PintaCallCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaCallInternalCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaCode.cs" />
+    <Compile Include="Pinta\Reflection\PintaCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaEmitNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaFunctionBuilder.cs" />
+    <Compile Include="Pinta\Reflection\PintaFunctionParameter.cs" />
+    <Compile Include="Pinta\Reflection\PintaFunctionVariable.cs" />
+    <Compile Include="Pinta\Reflection\PintaFunctionVariableCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaIndexNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\IPintaNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaIntegerCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaLabel.cs" />
+    <Compile Include="Pinta\Reflection\PintaLabelCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaLengthMinMaxNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaLengthVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaNode.cs" />
+    <Compile Include="Pinta\Reflection\PintaNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaParameterCodeLine.cs" />
+    <Compile Include="Pinta\PintaGenerateCode.cs" />
+    <Compile Include="NotReachableException.cs" />
+    <Compile Include="Parsing\Parser.cs" />
+    <Compile Include="Parsing\Scanner.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramBlobType.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramBuilder.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramBlob.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramString.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramVariable.cs" />
+    <Compile Include="Pinta\Reflection\PintaProgramVariableCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaRegisterStringsNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaSectionNodeVisitor.cs" />
+    <Compile Include="Pinta\Reflection\PintaSimpleCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaBlobCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaStringCodeLine.cs" />
+    <Compile Include="Pinta\Reflection\PintaTemporaryFunctionVariable.cs" />
+    <Compile Include="Pinta\PintaTargetReference.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ScriptSyntaxException.cs" />
+    <Compile Include="Tree\ScriptVisitor.cs" />
+    <Compile Include="Tree\Expressions\ScriptArrayAccessExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptArrayExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptAssignmentExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptAssignmentOperator.cs" />
+    <Compile Include="Tree\Expressions\ScriptBinaryExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptBinaryOperator.cs" />
+    <Compile Include="Tree\Expressions\ScriptNameExpression.cs" />
+    <Compile Include="Tree\IScriptReferenceExpression.cs" />
+    <Compile Include="Tree\IScriptVisitor.cs" />
+    <Compile Include="Tree\ScriptArgumentVariable.cs" />
+    <Compile Include="Tree\ScriptArrayElement.cs" />
+    <Compile Include="Tree\ScriptArrayExpressionElement.cs" />
+    <Compile Include="Tree\ScriptArrayGapElement.cs" />
+    <Compile Include="Tree\ScriptForExpressionTarget.cs" />
+    <Compile Include="Tree\ScriptForTarget.cs" />
+    <Compile Include="Tree\ScriptForVarTarget.cs" />
+    <Compile Include="Tree\ScriptLiteralKind.cs" />
+    <Compile Include="Tree\ScriptLocalVariable.cs" />
+    <Compile Include="Tree\ScriptNameValueKind.cs" />
+    <Compile Include="Tree\ScriptType.cs" />
+    <Compile Include="Tree\ScriptVariable.cs" />
+    <Compile Include="Tree\Statements\ScriptBlockStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptBreakStatement.cs" />
+    <Compile Include="Tree\Expressions\ScriptConditionalExpression.cs" />
+    <Compile Include="Tree\Statements\ScriptContinueStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptDebuggerStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptDoStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptEmptyStatement.cs" />
+    <Compile Include="Tree\Expressions\ScriptExpression.cs" />
+    <Compile Include="Tree\Statements\ScriptExpressionStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptForinStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptForStatement.cs" />
+    <Compile Include="Tree\ScriptFunctionDeclaration.cs" />
+    <Compile Include="Tree\Expressions\ScriptFunctionExpression.cs" />
+    <Compile Include="Tree\ScriptIdentifier.cs" />
+    <Compile Include="Tree\Statements\ScriptIfStatement.cs" />
+    <Compile Include="Tree\Expressions\ScriptInvokeExpression.cs" />
+    <Compile Include="Tree\Statements\ScriptLabelStatement.cs" />
+    <Compile Include="Tree\Expressions\ScriptListExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptLiteralExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptMemberAccessExpression.cs" />
+    <Compile Include="Tree\ScriptNameValue.cs" />
+    <Compile Include="Tree\Expressions\ScriptNewExpression.cs" />
+    <Compile Include="Tree\ScriptNode.cs" />
+    <Compile Include="Tree\Expressions\ScriptObjectExpression.cs" />
+    <Compile Include="Tree\ScriptProgram.cs" />
+    <Compile Include="Tree\Statements\ScriptReturnStatement.cs" />
+    <Compile Include="Tree\ScriptSourceElement.cs" />
+    <Compile Include="Tree\ScriptSourceLocation.cs" />
+    <Compile Include="Tree\ScriptSourceSpan.cs" />
+    <Compile Include="Tree\Statements\ScriptStatement.cs" />
+    <Compile Include="Tree\ScriptSwitchCase.cs" />
+    <Compile Include="Tree\Statements\ScriptSwitchStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptThrowStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptTryStatement.cs" />
+    <Compile Include="Tree\Expressions\ScriptUnaryExpression.cs" />
+    <Compile Include="Tree\Expressions\ScriptUnaryOperator.cs" />
+    <Compile Include="Tree\Statements\ScriptVarStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptWhileStatement.cs" />
+    <Compile Include="Tree\Statements\ScriptWithStatement.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Y Include="Parsing\Parser.y">
+    </Y>
+    <Lex Include="Parsing\Scanner.lex" />
+    <Compile Include="Parsing\Parser.Generated.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Parser.y</DependentUpon>
+    </Compile>
+    <Compile Include="Parsing\Scanner.Generated.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Scanner.lex</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)Tools\Tasks\Marius.Build.targets" />
+  <!--<PropertyGroup>
+    <CompileDependsOn>GenerateGppgParser;$(CompileDependsOn)</CompileDependsOn>
+    <GeneratedFiles>$(ProjectDir)obj\$(Configuration)\Generated\</GeneratedFiles>
+  </PropertyGroup>
+  <Target Name="GenerateGppgParser" Inputs="@(Y)" Outputs="@(Y->'%(filename).Generated.cs')">
+    <MakeDir Directories="$(GeneratedFiles)" />
+    <Exec WorkingDirectory="$(GeneratedFiles)" Command="$(ProjectDir)../Tools/gppg/binaries/gppg.exe /babel /no-info /gplex &quot;/out:@(Y->'%(filename).Generated.cs')&quot; &quot;@(Y->'%(FullPath)')&quot;" />
+    <CreateItem Include="@(Y->'$(GeneratedFiles)%(filename).Generated.cs')">
+      <Output TaskParameter="Include" ItemName="Compile" />
+    </CreateItem>
+  </Target>
+   To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>

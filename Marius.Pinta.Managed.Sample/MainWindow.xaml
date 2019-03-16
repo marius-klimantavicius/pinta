@@ -1,0 +1,20 @@
+﻿<Window x:Class="Marius.Pinta.Managed.Sample.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:avalon="http://icsharpcode.net/sharpdevelop/avalonedit"
+        Title="Pinta tester" Height="682" Width="611">
+    <TabControl>
+        <TabItem Header="Run">
+            <Grid Background="#FFE5E5E5">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Button Grid.Row="0" Content="Compile and execute" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Width="142" Grid.ColumnSpan="2" Click="Button_CompileAndExecute_Click"/>
+                <avalon:TextEditor Margin="5,5,5,5" Grid.Row="1" Name="script" SyntaxHighlighting="JavaScript" FontFamily="Consolas" />
+                <TextBox Margin="5,5,5,5" Grid.Row="2" Name="execResultTxt" TextWrapping="Wrap" FontFamily="Consolas" />
+            </Grid>
+        </TabItem>
+    </TabControl>
+</Window>

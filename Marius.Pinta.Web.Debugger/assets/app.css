@@ -1,0 +1,22 @@
+﻿#content-root
+{
+    height: 100%;
+    display: grid;
+    grid-template-rows: [toolbar] auto [body] 1fr;
+    grid-template-columns: 50% 50%;
+}
+
+#message-list
+{
+    grid-column: 1/1;
+}
+
+#globals-list
+{
+    grid-column: 2/2;
+}
+
+.dirty
+{
+    background-color: wheat
+}

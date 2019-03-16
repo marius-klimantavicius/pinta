@@ -1,0 +1,177 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{0EA3E88F-B99D-4656-8DAC-AB91352B983B}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <RootNamespace>Marius.Pinta.Script</RootNamespace>
+    <AssemblyName>Marius.Pinta.Script</AssemblyName>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Code\PintaCodeWalker.cs" />
+    <Compile Include="Code\PintaCodeWalker.Expression.cs" />
+    <Compile Include="Code\PintaCodeWalker.Statement.cs" />
+    <Compile Include="Code\PintaFunctionCompiler.cs" />
+    <Compile Include="Code\PintaFunctionCompiler.Expression.cs" />
+    <Compile Include="Code\PintaFunction.cs" />
+    <Compile Include="Code\PintaFunctionClosure.cs" />
+    <Compile Include="Code\PintaFunctionInner.cs" />
+    <Compile Include="Code\PintaFunctionLocal.cs" />
+    <Compile Include="Code\PintaFunctionParameter.cs" />
+    <Compile Include="Code\PintaIdentityComparer.cs" />
+    <Compile Include="Code\PintaInternalFunction.cs" />
+    <Compile Include="Code\PintaModule.cs" />
+    <Compile Include="Code\PintaScope.cs" />
+    <Compile Include="Code\PintaFunctionTemporaryLocal.cs" />
+    <Compile Include="Optimization\PintaCodeMatchRewriter.cs" />
+    <Compile Include="Optimization\PintaCodeOptimizer.cs" />
+    <Compile Include="Optimization\PintaCodeRewriter.cs" />
+    <Compile Include="Optimization\PintaCodeRewriter.Expression.cs" />
+    <Compile Include="Optimization\PintaCodeRewriter.Statement.cs" />
+    <Compile Include="Code\PintaFunctionResolver.cs" />
+    <Compile Include="Parser\Ast\ArrayExpression.cs" />
+    <Compile Include="Parser\Ast\AssignmentExpression.cs" />
+    <Compile Include="Parser\Ast\BinaryExpression.cs" />
+    <Compile Include="Parser\Ast\BlockStatement.cs" />
+    <Compile Include="Parser\Ast\BreakStatement.cs" />
+    <Compile Include="Parser\Ast\CallExpression.cs" />
+    <Compile Include="Parser\Ast\CatchClause.cs" />
+    <Compile Include="Parser\Ast\ConditionalExpression.cs" />
+    <Compile Include="Parser\Ast\ContinueStatement.cs" />
+    <Compile Include="Parser\Ast\DebuggerStatement.cs" />
+    <Compile Include="Parser\Ast\DoWhileStatement.cs" />
+    <Compile Include="Parser\Ast\EmptyStatement.cs" />
+    <Compile Include="Parser\Ast\Expression.cs" />
+    <Compile Include="Parser\Ast\ExpressionStatement.cs" />
+    <Compile Include="Parser\Ast\ForInStatement.cs" />
+    <Compile Include="Parser\Ast\ForStatement.cs" />
+    <Compile Include="Parser\Ast\FunctionDeclaration.cs" />
+    <Compile Include="Parser\Ast\FunctionExpression.cs" />
+    <Compile Include="Parser\Ast\Identifier.cs" />
+    <Compile Include="Parser\Ast\IfStatement.cs" />
+    <Compile Include="Parser\Ast\IPropertyKeyExpression.cs" />
+    <Compile Include="Parser\Ast\LabeledStatement.cs" />
+    <Compile Include="Parser\Ast\Literal.cs" />
+    <Compile Include="Parser\Ast\LogicalExpression.cs" />
+    <Compile Include="Parser\Ast\MemberExpression.cs" />
+    <Compile Include="Parser\Ast\NewExpression.cs" />
+    <Compile Include="Parser\Ast\ObjectExpression.cs" />
+    <Compile Include="Parser\Ast\Program.cs" />
+    <Compile Include="Parser\Ast\Property.cs" />
+    <Compile Include="Parser\Ast\RegExpLiteral.cs" />
+    <Compile Include="Parser\Ast\ReturnStatement.cs" />
+    <Compile Include="Parser\Ast\SequenceExpression.cs" />
+    <Compile Include="Parser\Ast\Statement.cs" />
+    <Compile Include="Parser\Ast\SwitchCase.cs" />
+    <Compile Include="Parser\Ast\SwitchStatement.cs" />
+    <Compile Include="Parser\Ast\SyntaxNode.cs" />
+    <Compile Include="Parser\Ast\SyntaxNodes.cs" />
+    <Compile Include="Parser\Ast\ThisExpression.cs" />
+    <Compile Include="Parser\Ast\ThrowStatement.cs" />
+    <Compile Include="Parser\Ast\TryStatement.cs" />
+    <Compile Include="Parser\Ast\UnaryExpression.cs" />
+    <Compile Include="Parser\Ast\UpdateExpression.cs" />
+    <Compile Include="Parser\Ast\VariableDeclaration.cs" />
+    <Compile Include="Parser\Ast\VariableDeclarator.cs" />
+    <Compile Include="Parser\Ast\WhileStatement.cs" />
+    <Compile Include="Parser\Ast\WithStatement.cs" />
+    <Compile Include="Parser\Comment.cs" />
+    <Compile Include="Parser\IFunctionDeclaration.cs" />
+    <Compile Include="Parser\IFunctionScope.cs" />
+    <Compile Include="Parser\IVariableScope.cs" />
+    <Compile Include="Parser\JavascriptParser.cs" />
+    <Compile Include="Parser\Loc.cs" />
+    <Compile Include="Parser\Messages.cs" />
+    <Compile Include="Parser\ParserException.cs" />
+    <Compile Include="Parser\ParserExtensions.cs" />
+    <Compile Include="Parser\ParserOptions.cs" />
+    <Compile Include="Parser\Position.cs" />
+    <Compile Include="Parser\State.cs" />
+    <Compile Include="Parser\Token.cs" />
+    <Compile Include="PintaCompiler.cs" />
+    <Compile Include="Code\PintaFunctionCompiler.Statement.cs" />
+    <Compile Include="PintaCompilerException.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection\Emit\PintaCodeLineWriter.cs" />
+    <Compile Include="Reflection\Emit\PintaCodeModuleWriter.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineBinary.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineCall.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineCode.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineInvoke.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineCallInternal.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineClosure.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineLabel.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineLabelMark.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineLocal.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineInteger.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineMatch.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineNewFunction.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineParameter.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineGlobal.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineString.cs" />
+    <Compile Include="Reflection\Lines\PintaCodeLineType.cs" />
+    <Compile Include="Reflection\Emit\PintaCodeIdResolver.cs" />
+    <Compile Include="Reflection\Emit\PintaCodeLabelOffsetResolver.cs" />
+    <Compile Include="Reflection\PintaCode.cs" />
+    <Compile Include="Reflection\PintaCodeBinary.cs" />
+    <Compile Include="Reflection\PintaCodeBinaryComparer.cs" />
+    <Compile Include="Reflection\PintaCodeBinaryType.cs" />
+    <Compile Include="Reflection\Emit\PintaCodeBinaryWriter.cs" />
+    <Compile Include="Reflection\PintaCodeClosure.cs" />
+    <Compile Include="Reflection\PintaCodeCompressor.cs" />
+    <Compile Include="Reflection\PintaCodeDecompressor.cs" />
+    <Compile Include="Reflection\PintaCodeFunction.cs" />
+    <Compile Include="Reflection\PintaCodeGenerator.cs" />
+    <Compile Include="Code\PintaLabelScope.cs" />
+    <Compile Include="Reflection\PintaCodeGeneratorMode.cs" />
+    <Compile Include="Reflection\PintaCodeGlobal.cs" />
+    <Compile Include="Reflection\PintaCodeInternalFunction.cs" />
+    <Compile Include="Reflection\PintaCodeLabel.cs" />
+    <Compile Include="Reflection\PintaCodeLine.cs" />
+    <Compile Include="Reflection\PintaCodeLocal.cs" />
+    <Compile Include="Reflection\PintaCodeMatchFlags.cs" />
+    <Compile Include="Reflection\PintaCodeModule.cs" />
+    <Compile Include="Reflection\PintaCodeParameter.cs" />
+    <Compile Include="Reflection\PintaCodeString.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+       Other similar extension points exist, see Microsoft.Common.targets.
+  <Target Name="BeforeBuild">
+  </Target>
+  <Target Name="AfterBuild">
+  </Target>
+  -->
+</Project>
