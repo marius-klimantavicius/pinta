@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stddef.h>
 
-#define PINTA_WITH_DEBUGGER 0
+#define PINTA_WITH_DEBUGGER 1
 
 #if PINTA_WITH_DEBUGGER // ignore - debugger is (really slowly) in progress and is not usable
 #include "debugger.h"

@@ -77,12 +77,23 @@
                 connect: function () {
                     app.messages.length = 0;
 
-                    ws = new WebSocket('ws://localhost:34001');
-                    ws.addEventListener('open', function () {
+                    if (ws) {
+                        ws.close();
+                    }
+
+                    var socket = new WebSocket('ws://localhost:34001'); 
+                    socket.addEventListener('open', function () {
+                        ws = socket;
                         console.log('Connection opened');
                     });
 
-                    ws.addEventListener('message', function (message) {
+                    socket.addEventListener('close', function () {
+                        if (ws === socket) {
+                            ws = null;
+                        }
+                    });
+
+                    socket.addEventListener('message', function (message) {
 
                         var show = false;
                         var ev = JSON.parse(message.data);
@@ -159,7 +170,9 @@
                         }
                     });
                 }, send: function (message) {
-                    ws.send(message);
+                    if (ws) {
+                        ws.send(message);
+                    }
                 }
             };
 
@@ -170,27 +183,6 @@
             });
         })();
 
-        function Mandelbrot() {
-            var Chars = " .,:;=|iI+hHOE#$-";
-            document.writeln("<pre>");
-            for (Im = -1.2; Im <= 1.2; Im += .05) {
-                for (Re = -2; Re <= 1; Re += .03) {
-                    var Zr = Re;
-                    var Zi = Im;
-                    var n = 0;
-                    for (; n < 16; n++) {
-                        var Zr2 = Zr * Zr;
-                        var Zi2 = Zi * Zi;
-                        if (Zr2 + Zi2 > 4) break;
-                        Zi = 2 * Zr * Zi + Im; Zr = Zr2 - Zi2 + Re;
-                    }
-                    document.write(Chars.charAt(n));
-                }
-                document.writeln("");
-            }
-            document.writeln("</pre><br>");
-            document.close();
-        }
     </script>
 </body>
 </html>
