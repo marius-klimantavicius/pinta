@@ -1,0 +1,196 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Roboto:400,500,700,400italic|Material+Icons">
+    <link href="assets/vuetify.css" rel="stylesheet" />
+    <link href="assets/app.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+</head>
+<body>
+
+    <div id="app-root">
+        <v-app>
+            <v-content>
+                <div id="content-root">
+                    <v-toolbar>
+                        <v-toolbar-items class="hidden-sm-and-down">
+                            <v-btn v-on:click="connect">Connect</v-btn>
+                            <v-btn v-for="def in actions" v-bind:key="def.action" v-on:click="send(def.action)">{{def.title}}</v-btn>
+                        </v-toolbar-items>
+                    </v-toolbar>
+
+                    <v-card id="message-list">
+                        <v-card-text style="overflow: auto">
+                            <pre v-for="item in messages">{{item}}</pre>
+                        </v-card-text>
+                    </v-card>
+
+                    <v-card id="globals-list">
+                        <v-card-text style="overflow: auto">
+                            <pre v-for="item in globals" v-bind:class="{dirty: item.isDirty}">{{item.name}}: {{item.value}} (← {{item.originalValue}})</pre>
+                        </v-card-text>
+                    </v-card>
+
+                    <v-card id="frame-stack">
+                        <v-card-text style="overflow: auto">
+                            <pre v-for="item in frameStack">{{item.index}}: {{ item.value }}</pre>
+                        </v-card-text>
+                    </v-card>
+
+                    <v-card id="frame-locals">
+                        <v-card-text style="overflow: auto">
+                            <pre v-for="item in frameLocals">{{item.index}}: {{ item.value }}</pre>
+                        </v-card-text>
+                    </v-card>
+                </div>
+            </v-content>
+        </v-app>
+    </div>
+
+    <script src="assets/vue.js"></script>
+    <script src="assets/vuetify.js"></script>
+
+    <script>
+        (function () {
+            var ws;
+            var data = {
+                actions: [
+                    { title: 'Step', action: 'run step' },
+                    { title: 'Run', action: 'run' },
+                    { title: 'Domain string', action: 'domain strings' },
+                    { title: 'Domain globals', action: 'domain globals' },
+                    { title: 'Frame locals', action: 'frame 0 locals' },
+                    { title: 'Frame arguments', action: 'frame 0 arguments' },
+                    { title: 'Frame this', action: 'frame 0 this' },
+                    { title: 'Frame stack', action: 'frame 0 stack' },
+                    { title: 'Frame body', action: 'frame 0 body' },
+                ],
+                messages: [],
+                globals: [],
+                frameStack: [],
+                frameLocals: []
+            };
+
+            var methods = {
+                connect: function () {
+                    app.messages.length = 0;
+
+                    ws = new WebSocket('ws://localhost:34001');
+                    ws.addEventListener('open', function () {
+                        console.log('Connection opened');
+                    });
+
+                    ws.addEventListener('message', function (message) {
+
+                        var show = false;
+                        var ev = JSON.parse(message.data);
+                        if (ev.event === 'globals' && ev.data) {
+                            var value = [];
+                            var dictionary = {};
+                            for (var i = 0; i < ev.data.length; i++) {
+                                var item = ev.data[i];
+                                dictionary[item.name] = item;
+                                value.push(item);
+                            }
+
+                            var current = app.globals;
+                            if (current) {
+                                for (var i = 0; i < current.length; i++) {
+                                    var item = current[i];
+                                    var updated = dictionary[item.name];
+                                    if (updated) {
+                                        if (updated.value != item.value) {
+                                            updated.isDirty = true;
+                                            updated.originalValue = item.value;
+                                        }
+                                    }
+                                }
+                            }
+
+                            app.globals = value;
+
+                        }
+                        else if (ev.event === 'step') {
+                            show = true;
+
+                            if (ev.opcode === 'STORE_GLOBAL') {
+                                ws.send('domain globals');
+                            }
+                            ws.send('frame 0 locals');
+                            ws.send('frame 0 stack');
+                        }
+                        else if (ev.event === 'after invoke') {
+                            ws.send('domain globals');
+                        }
+                        else if (ev.event === 'frame stack') {
+                            var stack = [];
+                            if (ev.data && ev.data.length) {
+                                for (var i = 0; i < ev.data.length; i++) {
+                                    var item = { index: i, value: JSON.stringify(ev.data[i]) };
+                                    if (item.value == null)
+                                        item.value = 'null';
+                                    stack.push(item);
+                                }
+                            }
+                            app.frameStack = stack;
+                        }
+                        else if (ev.event === 'frame locals') {
+                            var stack = [];
+                            if (ev.data && ev.data.length) {
+                                for (var i = 0; i < ev.data.length; i++) {
+                                    var item = { index: i, value: JSON.stringify(ev.data[i]) };
+                                    if (item.value == null)
+                                        item.value = 'null';
+                                    stack.push(item);
+                                }
+                            }
+                            app.frameLocals = stack;
+                        }
+                        else {
+                            show = true;
+                        }
+
+                        if (show) {
+                            app.messages.unshift(message.data);
+                            if (app.messages.length > 10)
+                                app.messages.length = 10;
+                        }
+                    });
+                }, send: function (message) {
+                    ws.send(message);
+                }
+            };
+
+            var app = new Vue({
+                el: '#app-root',
+                data: data,
+                methods: methods
+            });
+        })();
+
+        function Mandelbrot() {
+            var Chars = " .,:;=|iI+hHOE#$-";
+            document.writeln("<pre>");
+            for (Im = -1.2; Im <= 1.2; Im += .05) {
+                for (Re = -2; Re <= 1; Re += .03) {
+                    var Zr = Re;
+                    var Zi = Im;
+                    var n = 0;
+                    for (; n < 16; n++) {
+                        var Zr2 = Zr * Zr;
+                        var Zi2 = Zi * Zi;
+                        if (Zr2 + Zi2 > 4) break;
+                        Zi = 2 * Zr * Zi + Im; Zr = Zr2 - Zi2 + Re;
+                    }
+                    document.write(Chars.charAt(n));
+                }
+                document.writeln("");
+            }
+            document.writeln("</pre><br>");
+            document.close();
+        }
+    </script>
+</body>
+</html>

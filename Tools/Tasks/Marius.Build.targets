@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+ Copyright (c) 2010 Marius Klimantavičius
+
+ Permission is hereby granted, free of charge, to any person
+ obtaining a copy of this software and associated documentation
+ files (the "Software"), to deal in the Software without
+ restriction, including without limitation the rights to use,
+ copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software, and to permit persons to whom the
+ Software is furnished to do so, subject to the following
+ conditions:
+
+ The above copyright notice and this permission notice shall be
+ included in all copies or substantial portions of the Software.
+
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ OTHER DEALINGS IN THE SOFTWARE.
+-->
+
+<Project ToolsVersion="3.5" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <UsingTask AssemblyFile="Marius.Build.Tasks.dll" TaskName="Gppg"/>
+  <UsingTask AssemblyFile="Marius.Build.Tasks.dll" TaskName="Gplex"/>
+  <UsingTask AssemblyFile="Marius.Build.Tasks.dll" TaskName="Jay" />
+
+  <Target Name="Init">
+    <Error Text="ToolsPath property must be set in including project" Condition="'$(ToolsPath)'==''"/>
+  </Target>
+  
+  <Target Name="GenerateGppgParser" Inputs="@(Y)" Outputs="@(Y->'%(RootDir)%(Directory)%(Filename).Generated.cs')" DependsOnTargets="Init">
+    <Message Text="Building: @(Y->'%(RootDir)%(Directory)%(Filename).Generated.cs')" Importance="high"/>
+    <Gppg ToolsPath="$(ToolsPath)" Report="True" Conflicts="True" Verbose="True" Listing="True" InputFiles="@(Y)" IntermediateDirectory="$(IntermediateOutputPath)" Babel="True" Gplex="True" NoInfo="True" NoLines="False">
+      <!--<Output TaskParameter="OutputFiles" ItemName="Compile" />-->
+    </Gppg>
+  </Target>
+
+  <Target Name="GenerateGplexLexer" Inputs="@(Lex)" Outputs="@(Lex->'%(RootDir)%(Directory)%(Filename).Generated.cs')" DependsOnTargets="Init">
+    <Message Text="Building: @(Lex->'%(RootDir)%(Directory)%(Filename).Generated.cs')" Importance="high"/>
+    <Gplex ToolsPath="$(ToolsPath)" Unicode="True" Summary="True" Babel="True" Verbose="True" Listing="True" InputFiles="@(Lex)" IntermediateDirectory="$(IntermediateOutputPath)" NoInfo="True">
+      <!--<Output TaskParameter="OutputFiles" ItemName="Compile" />-->
+    </Gplex>
+  </Target>
+
+  <Target Name="GenerateJayParser" Inputs="@(Jay)" Outputs="@(Jay->'$(JayOutputBaseDirectory)\%(Filename).Generated.cs')" DependsOnTargets="Init">
+    <Message Text="Jay" Importance ="high"/>
+    <Jay ToolsPath="$(ToolsPath)" IncludeLines="True" Verbose="True" OutputBaseDirectory="$(JayOutputBaseDirectory)" InputFiles="@(Jay)" IntermediateDirectory="$(IntermediateOutputPath)" />
+  </Target>
+  
+  <PropertyGroup>
+    <CompileDependsOn>GenerateGppgParser;GenerateGplexLexer;GenerateJayParser;$(CompileDependsOn)</CompileDependsOn>
+    <UseHostCompilerIfAvailable>False</UseHostCompilerIfAvailable>
+  </PropertyGroup>
+</Project>
