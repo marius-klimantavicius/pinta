@@ -245,8 +245,7 @@ i32 pinta_debugger_on_ws_connect(PintaWebContext* context, void *user_data)
 void pinta_debugger_on_ws_connected(PintaWebContext *context, void *user_data)
 {
     PintaDebuggerSession *session = pinta_debugger_get_session(user_data);
-
-    if (session == NULL || session->context != NULL)
+    if (session == NULL)
         return;
 
     session->context = context;
@@ -255,8 +254,7 @@ void pinta_debugger_on_ws_connected(PintaWebContext *context, void *user_data)
 void pinta_debugger_on_ws_closed(PintaWebContext *context, void *user_data)
 {
     PintaDebuggerSession *session = pinta_debugger_get_session(user_data);
-
-    if (session == NULL || session->context != context)
+    if (session == NULL)
         return;
 
     session->context = NULL;
@@ -718,9 +716,6 @@ void pinta_debugger_on_tick(PintaCore *core)
     PintaDebuggerSession *session;
     debugger = core->debugger;
     session = (PintaDebuggerSession *)debugger->session;
-
-    if (session->context == NULL)
-        return;
 
     pinta_web_server_update(&session->server);
 }
