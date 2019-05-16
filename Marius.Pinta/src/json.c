@@ -377,7 +377,7 @@ PintaException pinta_json_write_end(PintaCore *core, PintaJsonWriter *writer)
     else
     {
         if ((writer->stack & PINTA_JSON_NAME) != 0)
-            PINTA_THROW(PINTA_EXCEPTION_INVALID_OPCODE);
+            PINTA_THROW(PINTA_EXCEPTION_INVALID_OPERATION);
 
         PINTA_CHECK(pinta_json_write_raw(core, writer, 0, close_brace_literal, PINTA_LITERAL_LENGTH(close_brace_literal)));
     }
@@ -397,7 +397,7 @@ PintaException pinta_json_write_property_name(PintaCore *core, PintaJsonWriter *
         return PINTA_EXCEPTION_INVALID_OPERATION;
 
     if ((writer->stack & PINTA_JSON_NAME) != 0) // we've already emitted property name, waiting for value
-        return PINTA_EXCEPTION_INVALID_OPCODE;
+        return PINTA_EXCEPTION_INVALID_OPERATION;
 
     exception = pinta_json_write_string(core, writer, name, string_get_length(name));
 
@@ -414,7 +414,7 @@ PintaException pinta_json_write_property_name_c(PintaCore *core, PintaJsonWriter
         return PINTA_EXCEPTION_INVALID_OPERATION;
 
     if ((writer->stack & PINTA_JSON_NAME) != 0) // we've already emitted property name, waiting for value
-        return PINTA_EXCEPTION_INVALID_OPCODE;
+        return PINTA_EXCEPTION_INVALID_OPERATION;
 
     exception = pinta_json_write_string_c(core, writer, name, string_get_length_c(name));
 

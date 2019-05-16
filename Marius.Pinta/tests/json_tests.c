@@ -71,7 +71,6 @@ PintaException json_write(PintaCore *core, PintaJsonWriter *writer, wchar *value
 
     buffer_offset = (u32)(data - &buffer[0]);
 
-PINTA_EXIT:
     return exception;
 }
 
@@ -80,9 +79,6 @@ PINTA_TEST_BEGIN(json_write_object, 2)
     PintaJsonWriter writer_;
     PintaJsonWriter *writer = &writer_;
     PintaReference *local = PINTA_GC_LOCAL(0);
-    PintaApi api;
-    u8 *buf;
-    u32 len;
 
     writer->data = NULL;
     writer->stack = 0;

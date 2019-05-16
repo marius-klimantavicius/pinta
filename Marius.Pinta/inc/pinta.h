@@ -226,7 +226,7 @@ typedef enum PintaCode
 typedef enum PintaCodeMatchType
 {
     PINTA_CODE_MATCH_TYPE_SIMPLE        = 0x00,
-    PINTA_CODE_MATCH_TYPE_PAN           = 0x10,
+    PINTA_CODE_MATCH_TYPE_PAN           = 0x01,
 } PintaCodeMatchType;
 
 #define PINTA_CODE_TOKEN_EMPTY          0xFFFFFFFF
