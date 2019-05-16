@@ -56,7 +56,7 @@ namespace Marius.Script.Test
             PintaTestFileGeneratorV2.NativeFunctionCallingManagedFunction("native-call-managed-v2.pint");
             PintaTestFileGeneratorV2.CreateObjectUsingObjectLiteral("object-literal-v2.pint");
             PintaTestFileGeneratorV2.PatternSimple("pattern-simple-v2.pint");
-            PintaTestFileGeneratorV2.PatternSimple("pattern-pan-v2.pint");
+            PintaTestFileGeneratorV2.PatternPan("pattern-pan-v2.pint");
             PintaTestFileGeneratorV2.SubtractTwoStrings("subtract-two-strings-v2.pint");
 
             PintaSampleFileGenerator.Sample();
