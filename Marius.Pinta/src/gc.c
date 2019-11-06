@@ -726,7 +726,7 @@ void pinta_gc_compact(PintaCore *core)
         // look through threads for space for reloc info, use the one that has the most free space [all mutators must be stopped at this point]
         // in the worst case we will use single entry allocated in the native stack
 
-        count = (u32)((PintaHeapReloc*)&current->frame->stack_end[0] - (PintaHeapReloc*)&current->frame->stack[1]);
+        count = (u32)((PintaHeapReloc*)&current->stack_end[0] - (PintaHeapReloc*)&current->frame->stack[1]);
 
         if (count > reloc_count)
         {

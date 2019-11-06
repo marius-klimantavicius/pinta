@@ -84,33 +84,35 @@ namespace Marius.Pinta.Managed.Sample
 
         private void Execute(string filename)
         {
-            var pe = new PintaEngine(filename);
+            using (var pe = new PintaEngine(filename))
+            {
 
-            //var parameters = parameterDataGrid.ItemsSource as List<Parameter>;
-            //if (parameters != null)
-            //{
-            //    foreach (var p in parameters)
-            //    {
-            //        if (p.Name == null)
-            //            continue;
+                //var parameters = parameterDataGrid.ItemsSource as List<Parameter>;
+                //if (parameters != null)
+                //{
+                //    foreach (var p in parameters)
+                //    {
+                //        if (p.Name == null)
+                //            continue;
 
-            //        if (string.IsNullOrEmpty(p.Value))
-            //            pe.SetGlobal(p.Name, null);
-            //        else
-            //            pe.SetGlobal(p.Name, p.Value);
-            //    }
-            //}
+                //        if (string.IsNullOrEmpty(p.Value))
+                //            pe.SetGlobal(p.Name, null);
+                //        else
+                //            pe.SetGlobal(p.Name, p.Value);
+                //    }
+                //}
 
-            execResultTxt.Text = "Executing...";
+                execResultTxt.Text = "Executing...";
 
-            var data = pe.Execute();
-            var result = Encoding.Unicode.GetString(data);
+                var data = pe.Execute();
+                var result = Encoding.Unicode.GetString(data);
 
-            execResultTxt.Text = result;
+                execResultTxt.Text = result;
 
-            var error = pe.GetGlobal("ERROR");
-            if (error != null)
-                execResultTxt.Text += "\r\n*-* ERROR = " + error + " *-*";
+                var error = pe.GetGlobal("ERROR");
+                if (error != null)
+                    execResultTxt.Text += "\r\n*-* ERROR = " + error + " *-*";
+            }
         }
 
         private string ToHex(byte[] bytes)

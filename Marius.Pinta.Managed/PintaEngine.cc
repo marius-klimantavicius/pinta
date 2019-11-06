@@ -155,6 +155,8 @@ namespace Marius
                 _environment = environment;
 
                 _state = (PintaManagedEngineState*)malloc(sizeof(PintaManagedEngineState));
+                if (!_state)
+                    throw gcnew OutOfMemoryException();
 
                 _state->engine = ((GCHandle::operator IntPtr(engine)).ToPointer());
 

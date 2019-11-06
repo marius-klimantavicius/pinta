@@ -68,8 +68,8 @@ PINTA_TEST_BEGIN(locals_are_gc_root, 2)
     locals = PINTA_GC_LOCAL(0);
     value = PINTA_GC_LOCAL(1);
 
-	thread->frame = pinta_frame_push(thread->frame);
-	sput_fail_if(thread->frame == NULL, "Stack frame pushed");
+    PINTA_CHECK(pinta_lib_frame_push(thread));
+    sput_fail_if(thread->frame == NULL, "Stack frame pushed");
 
     PINTA_CHECK(pinta_lib_array_alloc(core, 1, locals));
     thread->frame->function_locals.reference = locals->reference;

@@ -60,10 +60,21 @@
     + [Core] Add GC handle infrastructure for real interop
 
 2017-08-15
-    * [Core] Reduce stack frame size
+    + [Core] Reduce stack frame size
+        Partially implemented - removed stack_end, transform_result, transform_tag
 
 2018-05-01
     + [*] Use 16-bit wchars
 
 2019-03-10
     * [Compiler] Add symbols to help with debugging, extend debugger
+
+2019-11-03
+    + [Code] Do tail calls when CALL NOP* RET is detected (unless the call is switching domain or discarding result)
+    * [*] Create CMake (or similar) build
+    * [Core] Further reduce stack frame size:
+        Remove stack_start in favor of (PintaReference*)&frame[1]
+        Remove is_final_frame in favor of using having thread->final_frame
+        Make prev a tagged pointer and move discard_result into it (maybe prev is no longer a pointer but an offset to previous frame)
+        ? Remove code_start, code_end in favor of a single pointer
+        Split PintaStackFrame into simple and extended stack frames - extended stack frame would only be used if function_this, function_closure or return_domain is set

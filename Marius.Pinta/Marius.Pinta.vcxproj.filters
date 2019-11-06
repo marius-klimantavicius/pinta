@@ -102,6 +102,9 @@
     <ClCompile Include="src\json.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\domain-global.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="inc\pinta.h">

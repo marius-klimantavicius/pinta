@@ -1,58 +1,94 @@
 #include "pinta.h"
 
-PintaStackFrame *pinta_frame_init(PintaNativeMemory *memory, u32 length_in_bytes)
+PintaException pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, u32 length_in_bytes)
 {
     u8 *stack_start, *stack_end;
     PintaStackFrame *frame;
 
     if (memory == NULL)
-        return NULL;
+        return PINTA_EXCEPTION_INVALID_ARGUMENTS;
 
     if (length_in_bytes < sizeof(PintaStackFrame))
-        return NULL;
+        return PINTA_EXCEPTION_INVALID_ARGUMENTS;
 
-    frame = (PintaStackFrame*)pinta_memory_alloc(memory, sizeof(PintaStackFrame));
+    frame = (PintaStackFrame*)pinta_memory_alloc(memory, sizeof(PintaStackFrame) + length_in_bytes);
 
-    stack_start = (u8*)pinta_memory_alloc(memory, length_in_bytes);
-    stack_end = &stack_start[length_in_bytes];
+    stack_start = (u8*)&frame[1];
+    stack_end = ((u8*)frame) + (sizeof(PintaStackFrame) + length_in_bytes);
+    
+    thread->stack_end = (PintaReference*)stack_end;
 
     frame->return_address = NULL;
     frame->stack_start = (PintaReference*)stack_start;
     frame->stack = &frame->stack_start[-1];
-    frame->stack_end = (PintaReference*)stack_end;
+    frame->code_start = NULL;
+    frame->code_end = NULL;
     frame->function_this.reference = NULL;
     frame->function_closure.reference = NULL;
     frame->function_arguments.reference = NULL;
     frame->function_locals.reference = NULL;
-    frame->next = frame->prev = NULL;
+    frame->prev = NULL;
     frame->is_final_frame = 0;
     frame->discard_result = 0;
-    frame->transform_result = NULL;
-    frame->transform_tag = 0;
     frame->return_domain = NULL;
 
-    return frame;
+    thread->frame = frame;
+    thread->frame->code_end = NULL;
+    thread->frame->code_start = NULL;
+    thread->frame->is_final_frame = 1;
+
+    return PINTA_OK;
 }
 
-PintaStackFrame *pinta_frame_push(PintaStackFrame *frame)
+u8 pinta_frame_stack_is_empty(PintaStackFrame *frame)
 {
+    pinta_assert(frame != NULL);
+
+    return frame->stack < frame->stack_start;
+}
+
+PintaException pinta_stack_push(PintaThread *thread, PintaHeapObject *value)
+{
+    PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
+    PintaReference *top;
+
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
+
+    frame = thread->frame;
+    top = &frame->stack[1];
+    if (top >= thread->stack_end)
+        PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
+
+    frame->stack = top;
+    top->reference = value;
+
+PINTA_EXIT:
+    return PINTA_EXCEPTION(exception);
+}
+
+PintaException pinta_lib_frame_push(PintaThread *thread)
+{
+    PintaStackFrame *frame;
     PintaStackFrame *result;
     PintaReference *stack;
 
-    pinta_assert(frame != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
 
+    frame = thread->frame;
     result = (PintaStackFrame*)&frame->stack[1]; // stack always points to the last valid entry
-    if (result >= (PintaStackFrame*)frame->stack_end)
-        return NULL;
+    if (result >= (PintaStackFrame*)thread->stack_end)
+        return PINTA_EXCEPTION_STACK_OVERFLOW;
 
     stack = (PintaReference*)&result[1];
-    if (stack >= frame->stack_end)
-        return NULL;
+    if (stack >= thread->stack_end)
+        return PINTA_EXCEPTION_STACK_OVERFLOW;
 
     result->is_final_frame = 0;
     result->discard_result = 0;
-    result->transform_result = NULL;
-    result->transform_tag = 0;
 
     result->return_domain = NULL;
 
@@ -65,59 +101,110 @@ PintaStackFrame *pinta_frame_push(PintaStackFrame *frame)
 
     result->stack_start = stack;
     result->stack = &stack[-1];
-    result->stack_end = frame->stack_end;
 
-    frame->next = result;
     result->prev = frame;
-    result->next = NULL;
+    thread->frame = result;
 
-    return result;
+    return PINTA_OK;
 }
 
-PintaStackFrame *pinta_frame_pop(PintaStackFrame *frame)
+PintaException pinta_lib_frame_pop(PintaThread *thread)
 {
+    PintaStackFrame *frame;
     PintaStackFrame *result;
 
-    pinta_assert(frame != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
 
+    frame = thread->frame;
     result = frame->prev;
     if (result == NULL)
-        return result;
+        return PINTA_EXCEPTION_STACK_UNDERFLOW;
 
     frame->prev = NULL;
-    result->next = NULL;
-    return result;
+    thread->frame = result;
+
+    return PINTA_OK;
 }
 
-PintaException pinta_frame_stack_push(PintaStackFrame *frame, PintaHeapObject *value)
+u8 pinta_lib_stack_try_get_top(PintaThread *thread, PintaReference *result)
 {
-    PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *top;
 
-    pinta_assert(frame != NULL);
-    pinta_assert(frame->stack != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
 
-    top = &frame->stack[1];
-    if (top >= frame->stack_end)
-        PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
+    frame = thread->frame;
+    if (frame->stack < frame->stack_start)
+        return 0;
 
-    frame->stack = top;
-    top->reference = value;
+    top = frame->stack;
+    if (result != NULL)
+        result->reference = top->reference;
+
+    return 1;
+}
+
+PintaException pinta_lib_stack_set_top(PintaThread *thread, PintaReference *value)
+{
+    PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
+    PintaReference *top;
+
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
+    pinta_assert(value != NULL);
+
+    frame = thread->frame;
+    if (frame->stack < frame->stack_start)
+        PINTA_THROW(PINTA_EXCEPTION_STACK_UNDERFLOW);
+
+    top = frame->stack;
+    top->reference = value->reference;
 
 PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
 
-PintaException pinta_frame_stack_push_null(PintaStackFrame *frame)
+PintaException pinta_lib_stack_push(PintaThread *thread, PintaReference *value)
 {
     PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *top;
 
-    pinta_assert(frame != NULL);
-    pinta_assert(frame->stack != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
+    pinta_assert(value != NULL);
 
+    frame = thread->frame;
     top = &frame->stack[1];
-    if (top >= frame->stack_end)
+    if (top >= thread->stack_end)
+        PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
+
+    frame->stack = top;
+    top->reference = value->reference;
+
+PINTA_EXIT:
+    return PINTA_EXCEPTION(exception);
+}
+
+PintaException pinta_lib_stack_push_null(PintaThread *thread)
+{
+    PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
+    PintaReference *top;
+
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
+
+    frame = thread->frame;
+    top = &frame->stack[1];
+    if (top >= thread->stack_end)
         PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
 
     frame->stack = top;
@@ -127,13 +214,16 @@ PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
 
-PintaException pinta_frame_stack_pop(PintaStackFrame *frame, PintaReference *result)
+PintaException pinta_lib_stack_pop(PintaThread *thread, PintaReference *result)
 {
     PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *top;
 
-    pinta_assert(frame != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
 
+    frame = thread->frame;
     if (frame->stack < frame->stack_start)
         PINTA_THROW(PINTA_EXCEPTION_STACK_UNDERFLOW);
 
@@ -147,18 +237,22 @@ PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
 
-PintaException pinta_frame_stack_duplicate(PintaStackFrame *frame, u32 count)
+PintaException pinta_lib_stack_duplicate(PintaThread *thread, u32 count)
 {
     PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *start;
     PintaReference *top;
     PintaReference *end;
+    u32 stack_length;
     u32 i = 0;
 
-    pinta_assert(frame != NULL);
-    pinta_assert(frame->stack != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
+    pinta_assert(thread->frame->stack != NULL);
     pinta_assert(count != PINTA_CODE_TOKEN_EMPTY);
 
+    frame = thread->frame;
     if (count == 1)
     {
         start = frame->stack;
@@ -167,7 +261,7 @@ PintaException pinta_frame_stack_duplicate(PintaStackFrame *frame, u32 count)
         if (start < frame->stack_start)
             PINTA_THROW(PINTA_EXCEPTION_STACK_UNDERFLOW);
 
-        if (top >= frame->stack_end)
+        if (top >= thread->stack_end)
             PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
 
         top->reference = start->reference;
@@ -176,12 +270,22 @@ PintaException pinta_frame_stack_duplicate(PintaStackFrame *frame, u32 count)
     }
 
     end = &frame->stack[count];
-    if (end >= frame->stack_end)
+    if (end >= thread->stack_end)
         PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
 
-    PINTA_CHECK(pinta_frame_stack_get_reference(frame, count, &start));
+    if (frame->stack < frame->stack_start)
+        stack_length = 0;
+    else
+        stack_length = frame->stack - frame->stack_start + 1;
+
+    if (stack_length < count)
+        PINTA_THROW(PINTA_EXCEPTION_STACK_UNDERFLOW);
+
+    top = frame->stack;
+    start = top - count + 1;
 
     top = &frame->stack[1];
+
     for (i = 0; i < count; i++)
     {
         top->reference = start->reference;
@@ -195,14 +299,17 @@ PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
 
-PintaException pinta_frame_stack_get_reference(PintaStackFrame *frame, u32 offset, PintaReference **start)
+PintaException pinta_lib_stack_get_reference(PintaThread *thread, u32 offset, PintaReference **start)
 {
     PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *top;
     u32 stack_length;
 
-    pinta_assert(frame != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
 
+    frame = thread->frame;
     if (frame->stack < frame->stack_start)
         stack_length = 0;
     else
@@ -221,14 +328,17 @@ PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
 
-PintaException pinta_frame_stack_discard(PintaStackFrame *frame, u32 length)
+PintaException pinta_lib_stack_discard(PintaThread *thread, u32 length)
 {
     PintaException exception = PINTA_OK;
+    PintaStackFrame *frame;
     PintaReference *top;
     u32 stack_length;
 
-    pinta_assert(frame != NULL);
+    pinta_assert(thread != NULL);
+    pinta_assert(thread->frame != NULL);
 
+    frame = thread->frame;
     if (frame->stack < frame->stack_start)
         stack_length = 0;
     else
@@ -242,91 +352,4 @@ PintaException pinta_frame_stack_discard(PintaStackFrame *frame, u32 length)
 
 PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
-}
-
-PintaException pinta_stack_push(PintaThread *thread, PintaHeapObject *value)
-{
-    pinta_assert(thread != NULL);
-
-    return pinta_frame_stack_push(thread->frame, value);
-}
-
-PintaException pinta_lib_frame_push(PintaThread *thread)
-{
-    PintaException exception = PINTA_OK;
-    PintaStackFrame *frame;
-
-    pinta_assert(thread != NULL);
-    pinta_assert(thread->frame != NULL);
-
-    frame = pinta_frame_push(thread->frame);
-    if (frame == NULL)
-        PINTA_THROW(PINTA_EXCEPTION_STACK_OVERFLOW);
-
-    thread->frame = frame;
-
-PINTA_EXIT:
-    return PINTA_EXCEPTION(exception);
-}
-
-PintaException pinta_lib_frame_pop(PintaThread *thread)
-{
-    PintaException exception = PINTA_OK;
-    PintaStackFrame *frame;
-
-    pinta_assert(thread != NULL);
-    pinta_assert(thread->frame != NULL);
-
-    frame = pinta_frame_pop(thread->frame);
-    if (frame == NULL)
-        PINTA_THROW(PINTA_EXCEPTION_STACK_UNDERFLOW);
-
-    thread->frame = frame;
-
-PINTA_EXIT:
-    return PINTA_EXCEPTION(exception);
-}
-
-PintaException pinta_lib_stack_push(PintaThread *thread, PintaReference *value)
-{
-    pinta_assert(thread != NULL);
-    pinta_assert(value != NULL);
-
-    return pinta_frame_stack_push(thread->frame, value->reference);
-}
-
-PintaException pinta_lib_stack_push_null(PintaThread *thread)
-{
-    pinta_assert(thread != NULL);
-
-    return pinta_frame_stack_push_null(thread->frame);
-}
-
-PintaException pinta_lib_stack_pop(PintaThread *thread, PintaReference *result)
-{
-    pinta_assert(thread != NULL);
-
-    return pinta_frame_stack_pop(thread->frame, result);
-}
-
-PintaException pinta_lib_stack_duplicate(PintaThread *thread, u32 count)
-{
-    pinta_assert(thread != NULL);
-    pinta_assert(count != PINTA_CODE_TOKEN_EMPTY);
-
-    return pinta_frame_stack_duplicate(thread->frame, count);
-}
-
-PintaException pinta_lib_stack_get_reference(PintaThread *thread, u32 offset, PintaReference **start)
-{
-    pinta_assert(thread != NULL);
-
-    return pinta_frame_stack_get_reference(thread->frame, offset, start);
-}
-
-PintaException pinta_lib_stack_discard(PintaThread *thread, u32 length)
-{
-    pinta_assert(thread != NULL);
-
-    return pinta_frame_stack_discard(thread->frame, length);
 }

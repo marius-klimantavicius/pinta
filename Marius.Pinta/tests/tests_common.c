@@ -37,6 +37,7 @@ void pinta_init_tests(int heap_size, int stack_size)
     if (heap == NULL)
         heap = malloc(64 * 1024);
 
+    pinta_assert(heap != NULL);
     pinta_assert(heap_size + stack_size <= 60 * 1024);
 
     memset(heap, 0xCD, 64 * 1024);

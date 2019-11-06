@@ -83,7 +83,7 @@ void pinta_debug_raise_before_call(PintaThread *thread, u32 token, u32 arguments
         debugger->on_before_call(core, thread, token, arguments_count);
 }
 
-void pinta_debug_raise_after_call(PintaThread *thread)
+void pinta_debug_raise_after_call(PintaThread *thread, u32 is_tail_call)
 {
     PintaCore *core;
     PintaDebugger *debugger;
@@ -95,7 +95,7 @@ void pinta_debug_raise_after_call(PintaThread *thread)
 
     debugger = core->debugger;
     if (debugger != NULL)
-        debugger->on_after_call(core, thread);
+        debugger->on_after_call(core, thread, is_tail_call);
 }
 
 void pinta_debug_raise_before_call_internal(PintaThread *thread, u32 token, u32 arguments_count)
@@ -125,7 +125,7 @@ void pinta_debug_raise_after_call_internal(PintaThread *thread)
 
     debugger = core->debugger;
     if (debugger != NULL)
-        debugger->on_after_call_internal(core, thread);
+        debugger->on_after_call_internal(core, thread, 0);
 }
 
 void pinta_debug_raise_before_invoke(PintaThread *thread, u32 arguments_count, u8 has_this)
@@ -143,7 +143,7 @@ void pinta_debug_raise_before_invoke(PintaThread *thread, u32 arguments_count, u
         debugger->on_before_invoke(core, thread, arguments_count, has_this);
 }
 
-void pinta_debug_raise_after_invoke(PintaThread *thread)
+void pinta_debug_raise_after_invoke(PintaThread *thread, u32 is_tail_call)
 {
     PintaCore *core;
     PintaDebugger *debugger;
@@ -155,7 +155,7 @@ void pinta_debug_raise_after_invoke(PintaThread *thread)
 
     debugger = core->debugger;
     if (debugger != NULL)
-        debugger->on_after_invoke(core, thread);
+        debugger->on_after_invoke(core, thread, is_tail_call);
 }
 
 void pinta_debug_raise_before_return(PintaThread *thread)

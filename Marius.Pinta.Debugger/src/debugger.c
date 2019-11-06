@@ -274,12 +274,12 @@ PintaJsonWriter pinta_debugger_get_writer(PintaWebContext *context)
 void pinta_debugger_send_frame_stack(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -314,12 +314,12 @@ PINTA_EXIT:
 void pinta_debugger_send_frame_this(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -351,12 +351,12 @@ PINTA_EXIT:
 void pinta_debugger_send_frame_arguments(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -388,12 +388,12 @@ PINTA_EXIT:
 void pinta_debugger_send_frame_locals(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -425,12 +425,12 @@ PINTA_EXIT:
 void pinta_debugger_send_frame_closure(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -462,12 +462,12 @@ PINTA_EXIT:
 void pinta_debugger_send_frame_body(PintaCore *core, PintaWebContext *context, u32 index)
 {
     PintaException exception = PINTA_OK;
-    PintaThread *current = core->threads;
-    PintaStackFrame *frame = current->frame;
+    PintaThread *thread = core->threads;
+    PintaStackFrame *frame = thread->frame;
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->next;
+        frame = frame->prev;
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -955,7 +955,7 @@ void pinta_debugger_on_before_call(PintaCore *core, PintaThread *thread, u32 tok
     pinta_debugger_process_commands(session);
 }
 
-void pinta_debugger_on_after_call(PintaCore *core, PintaThread *thread)
+void pinta_debugger_on_after_call(PintaCore *core, PintaThread *thread, u32 is_tail_call)
 {
     PintaException exception = PINTA_OK;
     PintaDebugger *debugger;
@@ -976,6 +976,9 @@ void pinta_debugger_on_after_call(PintaCore *core, PintaThread *thread)
 
     pinta_json_write_property_name_c(core, &writer, "event");
     pinta_json_write_string_c(core, &writer, "after call", PINTA_JSON_LENGTH_AUTO);
+
+    pinta_json_write_property_name_c(core, &writer, "is_tail_call");
+    pinta_json_write_bool(core, &writer, is_tail_call);
 
     pinta_json_write_end(core, &writer);
 
@@ -1023,7 +1026,7 @@ void pinta_debugger_on_before_call_internal(PintaCore *core, PintaThread *thread
     pinta_debugger_process_commands(session);
 }
 
-void pinta_debugger_on_after_call_internal(PintaCore *core, PintaThread *thread)
+void pinta_debugger_on_after_call_internal(PintaCore *core, PintaThread *thread, u32 is_tail_call)
 {
     PintaException exception = PINTA_OK;
     PintaDebugger *debugger;
@@ -1044,6 +1047,9 @@ void pinta_debugger_on_after_call_internal(PintaCore *core, PintaThread *thread)
 
     pinta_json_write_property_name_c(core, &writer, "event");
     pinta_json_write_string_c(core, &writer, "after call internal", PINTA_JSON_LENGTH_AUTO);
+
+    pinta_json_write_property_name_c(core, &writer, "is_tail_call");
+    pinta_json_write_bool(core, &writer, is_tail_call);
 
     pinta_json_write_end(core, &writer);
 
@@ -1091,7 +1097,7 @@ void pinta_debugger_on_before_invoke(PintaCore *core, PintaThread *thread, u32 a
     pinta_debugger_process_commands(session);
 }
 
-void pinta_debugger_on_after_invoke(PintaCore *core, PintaThread *thread)
+void pinta_debugger_on_after_invoke(PintaCore *core, PintaThread *thread, u32 is_tail_call)
 {
     PintaException exception = PINTA_OK;
     PintaDebugger *debugger;
@@ -1112,6 +1118,9 @@ void pinta_debugger_on_after_invoke(PintaCore *core, PintaThread *thread)
 
     pinta_json_write_property_name_c(core, &writer, "event");
     pinta_json_write_string_c(core, &writer, "after invoke", PINTA_JSON_LENGTH_AUTO);
+
+    pinta_json_write_property_name_c(core, &writer, "is_tail_call");
+    pinta_json_write_bool(core, &writer, is_tail_call);
 
     pinta_json_write_end(core, &writer);
 

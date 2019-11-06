@@ -58,6 +58,8 @@ namespace Marius.Script.Test
             PintaTestFileGeneratorV2.PatternSimple("pattern-simple-v2.pint");
             PintaTestFileGeneratorV2.PatternPan("pattern-pan-v2.pint");
             PintaTestFileGeneratorV2.SubtractTwoStrings("subtract-two-strings-v2.pint");
+            PintaTestFileGeneratorV2.TailCallSimple("tail-call-simple.pint");
+            PintaTestFileGeneratorV2.TailCallInvoke("tail-call-invoke.pint");
 
             PintaSampleFileGenerator.Sample();
         }

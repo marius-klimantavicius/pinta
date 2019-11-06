@@ -51,6 +51,48 @@ void pinta_debug_assert_code(PintaThread *thread)
 
 /* helper/internal function */
 
+u32 pinta_code_is_tail_call(PintaThread *thread)
+{
+    PintaStackFrame *frame;
+    u8 *code;
+
+    pinta_debug_assert_code(thread);
+
+    code = thread->code_next_pointer;
+    if (code == NULL)
+        return 0;
+
+    frame = thread->frame;
+    if (frame == NULL)
+        return 0;
+
+    if (code < frame->code_start || code >= frame->code_end)
+        return 0;
+
+    if (frame->discard_result)
+        return 0;
+
+    if (!pinta_frame_stack_is_empty(frame))
+        return 0;
+
+    /*
+    Check for (NOP* RET)
+    */
+    do
+    {
+        if (*code == PINTA_CODE_RETURN)
+            return 1;
+
+        if (*code != PINTA_CODE_NOP)
+            return 0;
+
+        code++;
+
+    } while (code < frame->code_end);
+
+    return 0;
+}
+
 PintaException pinta_code_to_string(PintaThread *thread, PintaReference *value, PintaReference *result)
 {
     PintaCore *core;
@@ -1275,6 +1317,7 @@ PintaException pinta_code_call(PintaThread *thread, u32 token, u32 arguments_cou
     PintaCodeFunction function_value, *function = &function_value;
     PintaStackFrame *frame;
     PintaReference *stack;
+    u32 is_tail_call;
     struct
     {
         PintaReference arguments;
@@ -1304,9 +1347,13 @@ PintaException pinta_code_call(PintaThread *thread, u32 token, u32 arguments_cou
     pinta_array_ref_copy(&gc.arguments, 0, stack, arguments_count);
     PINTA_CHECK(pinta_lib_stack_discard(thread, arguments_count));
 
-    PINTA_CHECK(pinta_lib_frame_push(thread));
-    frame = thread->frame;
+    /* if next opcode is (NOP* RET) then we can do a tail call and reuse the stack frame */
+    is_tail_call = pinta_code_is_tail_call(thread);
+    if (!is_tail_call)
+        PINTA_CHECK(pinta_lib_frame_push(thread));
 
+    frame = thread->frame;
+    frame->discard_result = 0;
     frame->function_this.reference = NULL;
     frame->function_closure.reference = NULL;
     frame->function_arguments.reference = gc.arguments.reference;
@@ -1314,11 +1361,14 @@ PintaException pinta_code_call(PintaThread *thread, u32 token, u32 arguments_cou
 
     frame->code_start = function->code_start;
     frame->code_end = function->code_end;
-    frame->return_address = thread->code_next_pointer;
 
+    if (!is_tail_call) 
+        frame->return_address = thread->code_next_pointer;
+    
     thread->code_next_pointer = function->code_start;
+    thread->code_pointer = function->code_start;
 
-    pinta_debug_raise_after_call(thread);
+    pinta_debug_raise_after_call(thread, is_tail_call);
 
     PINTA_GC_RETURN(core);
 }
@@ -1381,7 +1431,6 @@ PintaException pinta_code_return(PintaThread *thread)
     u8 is_final_frame;
     PintaModuleDomain *return_domain;
     PintaReference value;
-    PintaFrameTransform transform_result;
 
     pinta_debug_assert_code(thread);
 
@@ -1392,14 +1441,10 @@ PintaException pinta_code_return(PintaThread *thread)
 
     return_address = thread->frame->return_address;
     discard_result = thread->frame->discard_result;
-    transform_result = thread->frame->transform_result;
     is_final_frame = thread->frame->is_final_frame;
     return_domain = thread->frame->return_domain;
 
     PINTA_CHECK(pinta_lib_stack_pop(thread, &value));
-    if (transform_result)
-        PINTA_CHECK(transform_result(thread, &value));
-
     PINTA_CHECK(pinta_lib_frame_pop(thread));
 
     if (return_domain != NULL)
@@ -1416,7 +1461,20 @@ PintaException pinta_code_return(PintaThread *thread)
     }
 
     if (!discard_result)
+    {
         PINTA_CHECK(pinta_lib_stack_push(thread, &value));
+    }
+    else
+    {
+        if (pinta_lib_stack_try_get_top(thread, &value) && value.reference != NULL)
+        {
+            if (value.reference->block_kind == PINTA_KIND_DOMAIN_GLOBAL)
+            {
+                PINTA_CHECK(pinta_lib_domain_global_get_value(core, &value, &value));
+                PINTA_CHECK(pinta_lib_stack_set_top(thread, &value));
+            }
+        }
+    }
 
     if (thread->frame == NULL)
         PINTA_THROW(PINTA_EXCEPTION_INVALID_OPERATION);
@@ -1652,7 +1710,6 @@ PintaException pinta_code_load_item(PintaThread *thread)
     PINTA_CHECK(pinta_lib_stack_push(thread, &gc.value));
 
     PINTA_GC_RETURN(core);
-
 }
 
 PintaException pinta_code_duplicate(PintaThread *thread, u32 count)
@@ -1884,8 +1941,6 @@ PintaException pinta_code_invoke(PintaThread *thread, u32 arguments_count, u8 ha
     else
         PINTA_THROW(PINTA_EXCEPTION_TYPE_MISMATCH);
 
-    pinta_debug_raise_after_invoke(thread);
-
 PINTA_EXIT:
     return PINTA_EXCEPTION(exception);
 }
@@ -1900,6 +1955,7 @@ PintaException pinta_code_invoke_function_managed(PintaThread *thread, u32 argum
     PintaCodeFunction code_function_value, *code_function = &code_function_value;
     PintaModuleDomain *function_domain;
     u32 function_token;
+    u32 is_tail_call;
     struct
     {
         PintaReference function_reference;
@@ -1958,7 +2014,15 @@ PintaException pinta_code_invoke_function_managed(PintaThread *thread, u32 argum
     PINTA_CHECK(pinta_lib_stack_discard(thread, offset));
 
     PINTA_CHECK(pinta_lib_array_alloc(core, code_function->locals_count, &gc.function_locals));
-    PINTA_CHECK(pinta_lib_frame_push(thread));
+
+    /* if next opcode is (NOP* RET) then we can do a tail call and reuse the stack frame */
+    /* we cannot reuse stack frame if we are switching to another domain */
+    is_tail_call = pinta_code_is_tail_call(thread);
+    if (thread->domain != function_domain)
+        is_tail_call = 0;
+
+    if (!is_tail_call)
+        PINTA_CHECK(pinta_lib_frame_push(thread));
 
     frame = thread->frame;
 
@@ -1971,11 +2035,15 @@ PintaException pinta_code_invoke_function_managed(PintaThread *thread, u32 argum
 
     frame->code_start = code_function->code_start;
     frame->code_end = code_function->code_end;
-    frame->return_address = thread->code_next_pointer;
+
+    if (!is_tail_call)
+        frame->return_address = thread->code_next_pointer;
 
     thread->domain = function_domain;
     thread->code_next_pointer = code_function->code_start;
     thread->code_pointer = code_function->code_start;
+
+    pinta_debug_raise_after_invoke(thread, is_tail_call);
 
     PINTA_GC_RETURN(core);
 }
@@ -2041,6 +2109,8 @@ PintaException pinta_code_invoke_function_native(PintaThread *thread, u32 argume
 
     if (!discard_return_value)
         PINTA_CHECK(pinta_lib_stack_push(thread, &gc.return_value));
+
+    pinta_debug_raise_after_invoke(thread, 0);
 
     PINTA_GC_RETURN(core);
 }
@@ -2284,6 +2354,8 @@ PintaException pinta_code_construct_function(PintaThread *thread, u32 arguments_
     PINTA_CHECK(pinta_lib_stack_push(thread, &gc.object_instance)); // pre-push created instance
 
     PINTA_CHECK(pinta_lib_array_alloc(core, code_function->locals_count, &gc.function_locals));
+
+    /* Cannot do a tail call because we are discarding the result of this function */
     PINTA_CHECK(pinta_lib_frame_push(thread));
 
     frame = thread->frame;

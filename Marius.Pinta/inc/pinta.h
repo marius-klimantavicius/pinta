@@ -127,6 +127,7 @@ typedef enum PintaKind
     PINTA_KIND_FUNCTION_NATIVE          = 0x0C,
     PINTA_KIND_PROPERTY_TABLE           = 0x0D,
     PINTA_KIND_GLOBAL_OBJECT            = 0x0E,
+    PINTA_KIND_DOMAIN_GLOBAL            = 0x0F,
     PINTA_KIND_LENGTH                         ,
     PINTA_KIND_FREE                     = 0xFF
 } PintaKind;
@@ -285,6 +286,7 @@ typedef struct PintaPropertyAccessor PintaPropertyAccessor;
 typedef struct PintaPropertyNative PintaPropertyNative;
 typedef struct PintaPropertySlot PintaPropertySlot;
 typedef struct PintaGlobalObject PintaGlobalObject;
+typedef struct PintaDomainGlobal PintaDomainGlobal;
 typedef struct PintaFree PintaFree;
 
 typedef struct PintaHeapCache PintaHeapCache;
@@ -345,8 +347,6 @@ typedef PintaException(*PintaDebugWrite)(PintaCore *core, PintaReference *value,
 typedef PintaException(*PintaCoreInternalFunction)(PintaCore *core, PintaReference *arguments, PintaReference *return_value);
 typedef PintaException(*PintaFunctionDelegate)(PintaCore *core, PintaThread *thread, PintaReference *function, PintaReference *function_this, PintaReference *function_arguments, u8 *discard_return_value, PintaReference *return_value);
 
-typedef PintaException(*PintaFrameTransform)(PintaThread *thread, PintaReference *value);
-
 typedef PintaException(*PintaPropertyNativeDelegate)(PintaCore *core, PintaReference *object, PintaReference *name, u32 native_token, u8 is_set, PintaReference *value);
 
 typedef PintaException(*PintaFileOpen)(PintaCore *core, PintaReference *file_name, void **file_handle);
@@ -361,9 +361,9 @@ typedef void(*PintaDebugOnDomain)(PintaCore *core, PintaModule *module, PintaMod
 typedef void(*PintaDebugOnStep)(PintaCore *core, PintaThread *thread);
 typedef void(*PintaDebugOnException)(PintaCore *core, PintaThread *thread, PintaException exception);
 typedef void(*PintaDebugOnBeforeCall)(PintaCore *core, PintaThread *thread, u32 token, u32 arguments_count);
-typedef void(*PintaDebugOnAfterCall)(PintaCore *core, PintaThread *thread);
+typedef void(*PintaDebugOnAfterCall)(PintaCore *core, PintaThread *thread, u32 is_tail_call);
 typedef void(*PintaDebugOnBeforeInvoke)(PintaCore *core, PintaThread *thread, u32 arguments_count, u8 has_this);
-typedef void(*PintaDebugOnAfterInvoke)(PintaCore *core, PintaThread *thread);
+typedef void(*PintaDebugOnAfterInvoke)(PintaCore *core, PintaThread *thread, u32 is_tail_call);
 typedef void(*PintaDebugOnBeforeReturn)(PintaCore *core, PintaThread *thread);
 typedef void(*PintaDebugOnAfterReturn)(PintaCore *core, PintaThread *thread);
 typedef void(*PintaDebugOnBreak)(PintaCore *core, PintaThread *thread, u8 *code);
@@ -599,6 +599,12 @@ struct PintaGlobalObject
     PintaHeapObject *global_body;
 };
 
+struct PintaDomainGlobal
+{
+    PintaModuleDomain *global_domain;
+    u32 global_token;
+};
+
 struct PintaFree
 {
     PintaHeapObject *next;
@@ -630,6 +636,7 @@ struct PintaHeapObject
         PintaObject object;
         PintaPropertyTable property_table;
         PintaGlobalObject global_object;
+        PintaDomainGlobal domain_global;
 
         PintaFree free;
 
@@ -696,31 +703,29 @@ struct PintaHeapHandle
 
 struct PintaStackFrame
 {
+    PintaStackFrame *prev;
+
     u8 *return_address;
-    PintaModuleDomain *return_domain;
 
     u8 *code_start;
     u8 *code_end;
 
+    // Store in prev as tagged pointer? where to put size then? we have only two bits in pointer (aligned to 4 in 32 bit case)
     u8 is_final_frame;
+    u8 discard_result;
     u8 padding_1;
     u8 padding_2;
 
-    u8 discard_result;
-    PintaFrameTransform transform_result;
-    u32 transform_tag;
-
     PintaReference *stack_start;
-    PintaReference *stack_end;
     PintaReference *stack;
 
-    PintaReference function_closure;
-    PintaReference function_this;
     PintaReference function_arguments;
     PintaReference function_locals;
 
-    PintaStackFrame *next;
-    PintaStackFrame *prev;
+    // Have a smaller frame if these are not used?
+    PintaModuleDomain *return_domain;
+    PintaReference function_closure;
+    PintaReference function_this;
 };
 
 struct PintaNativeFrame
@@ -743,6 +748,7 @@ struct PintaThread
     u8 *code_next_pointer;
 
     PintaStackFrame *frame;
+    PintaReference *stack_end;
 
     PintaThread *next;
     PintaThread *prev;
@@ -1668,6 +1674,38 @@ PintaException      pinta_lib_global_object_set_member(PintaCore *core, PintaRef
 PintaException      pinta_lib_global_object_debug_write(PintaCore *core, PintaReference *value, u32 max_depth, PintaJsonWriter *writer);
 
 // ***********************************************
+// Domain global
+// ***********************************************
+PintaModuleDomain  *pinta_domain_global_get_domain(PintaHeapObject *global);
+u32                 pinta_domain_global_get_token(PintaHeapObject *global);
+void                pinta_domain_global_set_domain(PintaHeapObject *global, PintaModuleDomain *domain);
+void                pinta_domain_global_set_token(PintaHeapObject *global, u32 token);
+PintaModuleDomain  *pinta_domain_global_ref_get_domain(PintaReference *global);
+u32                 pinta_domain_global_ref_get_token(PintaReference *global);
+void                pinta_domain_global_ref_set_domain(PintaReference *global, PintaModuleDomain *domain);
+void                pinta_domain_global_ref_set_token(PintaReference *global, u32 token);
+
+void                pinta_domain_global_init_type(PintaType *type);
+PintaHeapObject    *pinta_domain_global_alloc(PintaCore *core, PintaModuleDomain *domain, u32 token);
+
+PintaException      pinta_lib_domain_global_alloc(PintaCore *core, PintaModuleDomain *domain, u32 token, PintaReference *result);
+PintaException      pinta_lib_domain_global_get_value(PintaCore *core, PintaReference *value, PintaReference *result);
+PintaException      pinta_lib_domain_global_to_integer(PintaCore *core, PintaReference *value, PintaReference *result);
+PintaException      pinta_lib_domain_global_to_integer_value(PintaCore *core, PintaReference *value, i32 *result);
+PintaException      pinta_lib_domain_global_to_decimal(PintaCore *core, PintaReference *value, PintaReference *result);
+PintaException      pinta_lib_domain_global_to_string(PintaCore *core, PintaReference *value, PintaReference *result);
+PintaException      pinta_lib_domain_global_to_numeric(PintaCore *core, PintaReference *value, PintaReference *result);
+PintaException      pinta_lib_domain_global_to_bool(PintaCore *core, PintaReference *value, u8 *result);
+PintaException      pinta_lib_domain_global_to_zero(PintaCore *core, PintaReference *result);
+PintaException      pinta_lib_domain_global_get_member(PintaCore *core, PintaReference *value, PintaReference *name, u8 *is_accessor, PintaReference *result);
+PintaException      pinta_lib_domain_global_set_member(PintaCore *core, PintaReference *object, PintaReference *name, PintaReference *value, u8 *is_accessor, PintaReference *result);
+PintaException      pinta_lib_domain_global_get_item(PintaCore *core, PintaReference *array, u32 index, PintaReference *value);
+PintaException      pinta_lib_domain_global_set_item(PintaCore *core, PintaReference *array, u32 index, PintaReference *value);
+PintaException      pinta_lib_domain_global_get_length(PintaCore *core, PintaReference *array, u32 *result);
+PintaException      pinta_lib_domain_global_get_char(PintaCore *core, PintaReference *array, u32 index, wchar *result);
+PintaException      pinta_lib_domain_global_debug_write(PintaCore *core, PintaReference *value, u32 max_depth, PintaJsonWriter *writer);
+
+// ***********************************************
 // Code
 // ***********************************************
 
@@ -1734,21 +1772,16 @@ PintaException      pinta_code_rt_require(PintaCore *core, PintaThread *thread, 
 // Stack
 // ***********************************************
 
-PintaStackFrame    *pinta_frame_init(PintaNativeMemory *memory, u32 length_in_bytes);
-PintaStackFrame    *pinta_frame_push(PintaStackFrame *frame);
-PintaStackFrame    *pinta_frame_pop(PintaStackFrame *frame);
+PintaException      pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, u32 length_in_bytes);
 
-PintaException      pinta_frame_stack_push(PintaStackFrame *frame, PintaHeapObject *value);
-PintaException      pinta_frame_stack_push_null(PintaStackFrame *frame);
-PintaException      pinta_frame_stack_pop(PintaStackFrame *frame, PintaReference *result);
-PintaException      pinta_frame_stack_duplicate(PintaStackFrame *frame, u32 count);
-PintaException      pinta_frame_stack_get_reference(PintaStackFrame *frame, u32 offset, PintaReference **start);
-PintaException      pinta_frame_stack_discard(PintaStackFrame *frame, u32 length);
+u8                  pinta_frame_stack_is_empty(PintaStackFrame *frame);
 
 PintaException      pinta_lib_frame_push(PintaThread *thread);
 PintaException      pinta_lib_frame_pop(PintaThread *thread);
 
 PintaException      pinta_stack_push(PintaThread *thread, PintaHeapObject *value);
+u8                  pinta_lib_stack_try_get_top(PintaThread *thread, PintaReference *value);
+PintaException      pinta_lib_stack_set_top(PintaThread *thread, PintaReference *value);
 PintaException      pinta_lib_stack_push(PintaThread *thread, PintaReference *value);
 PintaException      pinta_lib_stack_pop(PintaThread *thread, PintaReference *result);
 PintaException      pinta_lib_stack_push_null(PintaThread *thread);
@@ -1846,11 +1879,11 @@ void                pinta_debug_raise_domain(PintaCore *core, PintaModule *modul
 void                pinta_debug_raise_step(PintaThread *thread);
 void                pinta_debug_raise_exception(PintaThread *thread, PintaException exception);
 void                pinta_debug_raise_before_call(PintaThread *thread, u32 token, u32 arguments_count);
-void                pinta_debug_raise_after_call(PintaThread *thread);
+void                pinta_debug_raise_after_call(PintaThread *thread, u32 is_tail_call);
 void                pinta_debug_raise_before_call_internal(PintaThread *thread, u32 token, u32 arguments_count);
 void                pinta_debug_raise_after_call_internal(PintaThread *thread);
 void                pinta_debug_raise_before_invoke(PintaThread *thread, u32 arguments_count, u8 has_this);
-void                pinta_debug_raise_after_invoke(PintaThread *thread);
+void                pinta_debug_raise_after_invoke(PintaThread *thread, u32 is_tail_call);
 void                pinta_debug_raise_before_return(PintaThread *thread);
 void                pinta_debug_raise_after_return(PintaThread *thread);
 void                pinta_debug_raise_break(PintaThread *thread, u8 *code);
@@ -1861,11 +1894,11 @@ void                pinta_debug_raise_break(PintaThread *thread, u8 *code);
 #define             pinta_debug_raise_step(thread)                                          ((void)0)
 #define             pinta_debug_raise_exception(thread, exception)                          ((void)0)
 #define             pinta_debug_raise_before_call(thread, token, arguments_count)           ((void)0)
-#define             pinta_debug_raise_after_call(thread);                                   ((void)0)
+#define             pinta_debug_raise_after_call(thread, is_tail_call);                     ((void)0)
 #define             pinta_debug_raise_before_call_internal(thread, token, arguments_count)  ((void)0)
 #define             pinta_debug_raise_after_call_internal(thread);                          ((void)0)
 #define             pinta_debug_raise_before_invoke(thread, arguments_count, has_this)      ((void)0)
-#define             pinta_debug_raise_after_invoke(thread)                                  ((void)0)
+#define             pinta_debug_raise_after_invoke(thread, is_tail_call)                    ((void)0)
 #define             pinta_debug_raise_before_return(thread)                                 ((void)0)
 #define             pinta_debug_raise_after_return(thread)                                  ((void)0)
 #define             pinta_debug_raise_break(thread, code)                                   ((void)0)

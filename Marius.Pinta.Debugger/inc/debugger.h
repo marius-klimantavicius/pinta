@@ -48,11 +48,11 @@ void                pinta_debugger_on_domain(PintaCore *core, PintaModule *modul
 void                pinta_debugger_on_step(PintaCore *core, PintaThread *thread);
 void                pinta_debugger_on_exception(PintaCore *core, PintaThread *thread, PintaException exception);
 void                pinta_debugger_on_before_call(PintaCore *core, PintaThread *thread, u32 token, u32 arguments_count);
-void                pinta_debugger_on_after_call(PintaCore *core, PintaThread *thread);
+void                pinta_debugger_on_after_call(PintaCore *core, PintaThread *thread, u32 is_tail_call);
 void                pinta_debugger_on_before_call_internal(PintaCore *core, PintaThread *thread, u32 token, u32 arguments_count);
-void                pinta_debugger_on_after_call_internal(PintaCore *core, PintaThread *thread);
+void                pinta_debugger_on_after_call_internal(PintaCore *core, PintaThread *thread, u32 is_tail_call);
 void                pinta_debugger_on_before_invoke(PintaCore *core, PintaThread *thread, u32 arguments_count, u8 has_this);
-void                pinta_debugger_on_after_invoke(PintaCore *core, PintaThread *thread);
+void                pinta_debugger_on_after_invoke(PintaCore *core, PintaThread *thread, u32 is_tail_call);
 void                pinta_debugger_on_before_return(PintaCore *core, PintaThread *thread);
 void                pinta_debugger_on_after_return(PintaCore *core, PintaThread *thread);
 void                pinta_debugger_on_break(PintaCore *core, PintaThread *thread, u8 *code);

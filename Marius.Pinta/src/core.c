@@ -110,6 +110,7 @@ PintaCore *pinta_core_init(PintaNativeMemory *memory, u32 heap_memory_length_in_
     pinta_function_native_init_type(&core->types[PINTA_KIND_FUNCTION_NATIVE]);
     pinta_property_table_init_type(&core->types[PINTA_KIND_PROPERTY_TABLE]);
     pinta_global_object_init_type(&core->types[PINTA_KIND_GLOBAL_OBJECT]);
+    pinta_domain_global_init_type(&core->types[PINTA_KIND_DOMAIN_GLOBAL]);
 
     thread = (PintaThread*)pinta_memory_alloc(memory, sizeof(PintaThread));
     if (thread == NULL)
@@ -121,10 +122,10 @@ PintaCore *pinta_core_init(PintaNativeMemory *memory, u32 heap_memory_length_in_
     thread->code_result = PINTA_OK;
     thread->code_next_pointer = NULL;
     thread->code_pointer = NULL;
-    thread->frame = pinta_frame_init(memory, stack_memory_in_bytes);
-    thread->frame->code_end = NULL;
-    thread->frame->code_start = NULL;
-    thread->frame->is_final_frame = 1;
+
+    if (pinta_frame_init(thread, memory, stack_memory_in_bytes) != PINTA_OK)
+        return NULL;
+
     thread->prev = NULL;
     thread->next = NULL;
     thread->domain = NULL;

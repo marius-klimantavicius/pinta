@@ -713,6 +713,47 @@ assertEqual(1, result, '\'9\' - \'0\' == 9');
 ", filename, _defaultInternalFunctions);
         }
 
+        public static void TailCallSimple(string filename)
+        {
+            SaveScriptTestFile(@"
+
+function count(n) {
+    return count2(n, 0);
+}
+
+function count2(n, ps) {
+    if (n == 0) return ps;
+    return count2(n - 1, ps + 1);
+}
+
+var value = count(10000);
+assertEqual(10000, value, 'Tail call');
+
+", filename, _defaultInternalFunctions);
+        }
+
+        public static void TailCallInvoke(string filename)
+        {
+            SaveScriptTestFile(@"
+
+function counter() {
+    this.count = function(n) {
+        return this.count2(n, 0);
+    };
+
+    this.count2 = function(n, ps) {
+        if (n == 0) return ps;
+        return this.count2(n - 1, ps + 1);
+    };
+}
+
+var cnt = new counter();
+var value = cnt.count(10000);
+assertEqual(10000, value, 'Tail call');
+
+", filename, _defaultInternalFunctions);
+        }
+
         private static void SaveScriptTestFile(string source, string filename, object internalFunctions)
         {
             var compiler = new PintaCompiler();
