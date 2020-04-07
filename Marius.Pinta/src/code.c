@@ -76,19 +76,16 @@ u32 pinta_code_is_tail_call(PintaThread *thread)
         return 0;
 
     /*
-    Check for (NOP* RET)
+    Check for (NOP* RET), max 4 codes
     */
-    do
+    for (; code < frame->code_end && code - thread->code_next_pointer < 4; code++) 
     {
         if (*code == PINTA_CODE_RETURN)
             return 1;
 
         if (*code != PINTA_CODE_NOP)
             return 0;
-
-        code++;
-
-    } while (code < frame->code_end);
+    }
 
     return 0;
 }

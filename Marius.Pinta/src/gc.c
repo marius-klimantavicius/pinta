@@ -499,7 +499,7 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
 
     u32 available = 0;
     PintaHeapObject *next = NULL, *alive_last = NULL;
-    PintaHeapObject *free = NULL, *free_last = NULL, *free_before = NULL;
+    PintaHeapObject *free_block = NULL, *free_last = NULL, *free_before = NULL;
 
     PintaHeapObject *current;
 
@@ -559,56 +559,67 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
             // NOTE that in normal case (without pinned objects) the free space will be a single huge block
             // we will only move downwards
 
-            free = heap->free;
-            while (free != NULL && free < current)
+            free_block = heap->free;
+            while (free_block != NULL && free_block < current)
             {
-                if (free->block_length <= current->block_length || &free[free->block_length] == current)
+                if (free_block->block_length <= current->block_length || &free_block[free_block->block_length] == current)
                     break;
 
-                free = pinta_free_get_next(free);
+                free_block = pinta_free_get_next(free_block);
             }
 
             // we either found a block big enough to contain current
             // or we reached a free block that is just lower the current
-            if (free == NULL || free > current)
+            if (free_block == NULL || free_block > current)
             {
                 alive_last = current;
                 current = next;
                 continue;
             }
 
-            if (&free[free->block_length] == current) // (best case) in case we found an adjacent free block, we can ignore the blocks length, we are sure that length(free + current) > length(current)
+            if (free_block == NULL)
+                continue;
+
+            if ((free_block + free_block->block_length) == current) // (best case) in case we found an adjacent free block, we can ignore the blocks length, we are sure that length(free + current) > length(current)
             {
                 PintaHeapObject *reloc_start = current;
                 PintaHeapObject *reloc_end = &current[current->block_length];
 
-                available = free->block_length;
+                available = free_block->block_length;
 
-                free_before = pinta_free_remove(heap, free);
+                free_before = pinta_free_remove(heap, free_block);
 
                 // relocate
-                memmove(free, current, sizeof(PintaHeapObject) * current->block_length);
-                if (alive_last < free)
-                    alive_last = free;
+                memmove(free_block, current, sizeof(PintaHeapObject) * current->block_length);
+                if (alive_last < free_block)
+                    alive_last = free_block;
 
                 // at this point we must have at least one free entry in reloc
                 // this is ensured (and actual relocation performed) at the beggining of the loop
 
-                pinta_trace2("relocate: %p -> %p", current, free);
+                pinta_trace2("relocate: %p -> %p", current, free_block);
 
                 reloc[count].start = reloc_start;
                 reloc[count].end = reloc_end;
-                reloc[count].offset = (u32)(current - free);
+                reloc[count].offset = (u32)(current - free_block);
                 count++;
 
-                free = &free[free->block_length];
-                pinta_free_insert_after(heap, free_before, free, available);
-                if (free > free_last)
-                    free_last = free;
+                pinta_assert(free_block != NULL);
 
-                next = free;
+#if defined(_MSC_VER)
+#pragma warning (disable:6011)
+#endif
+                free_block = &free_block[free_block->block_length];
+#if defined(_MSC_VER)
+#pragma warning (default:6011)
+#endif
+                pinta_free_insert_after(heap, free_before, free_block, available);
+                if (free_block > free_last)
+                    free_last = free_block;
+
+                next = free_block;
             }
-            else if (free->block_length >= current->block_length)
+            else if (free_block->block_length >= current->block_length)
             {
                 // so we found a block that fits perfectly
                 // the current block will become free block, but to ensure the invariant, that free blocks are ordered by their addresses
@@ -624,33 +635,33 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
                 if (free_last != NULL)
                     free_before_last = pinta_free_get_prev(free_last);
 
-                available = free->block_length - current->block_length;
+                available = free_block->block_length - current->block_length;
 
                 // remove the current free block from free list
-                free_before = pinta_free_remove(heap, free);
+                free_before = pinta_free_remove(heap, free_block);
 
                 // relocate
-                memmove(free, current, sizeof(PintaHeapObject) * current->block_length);
-                if (alive_last < free)
-                    alive_last = free;
+                memmove(free_block, current, sizeof(PintaHeapObject) * current->block_length);
+                if (alive_last < free_block)
+                    alive_last = free_block;
 
                 // at this point we must have at least one free entry in reloc
                 // this is ensured (and actual relocation performed) at the beginning of the loop
 
-                pinta_trace2("relocate: %p -> %p", current, free);
+                pinta_trace2("relocate: %p -> %p", current, free_block);
 
                 reloc[count].start = reloc_start;
                 reloc[count].end = reloc_end;
-                reloc[count].offset = (u32)(current - free);
+                reloc[count].offset = (u32)(current - free_block);
                 count++;
 
                 if (available != 0)
                 {
-                    free = &free[current_block_length];
-                    pinta_free_insert_after(heap, free_before, free, available);
+                    free_block = free_block + current_block_length;
+                    pinta_free_insert_after(heap, free_before, free_block, available);
 
-                    if (free > free_last)
-                        free_last = free;
+                    if (free_block > free_last)
+                        free_last = free_block;
                 }
                 else
                 {
@@ -658,7 +669,7 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
                     // it is possible that free == free_last in that case free_last must be free_last->prev
                     // but hold on, in case free == free_last, we have corrupted the entry, thus we have free_before_last
 
-                    if (free_last == free)
+                    if (free_last == free_block)
                         free_last = free_before_last;
                 }
 
@@ -691,14 +702,14 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
         if (heap->free >= heap->top)
             heap->free = NULL;
 
-        free = heap->free;
-        while (free != NULL && pinta_free_get_next(free) < heap->top)
-            free = pinta_free_get_next(free);
+        free_block = heap->free;
+        while (free_block != NULL && pinta_free_get_next(free_block) < heap->top)
+            free_block = pinta_free_get_next(free_block);
 
-        pinta_assert(free == NULL || pinta_free_get_next(free) == heap->top);
+        pinta_assert(free_block == NULL || pinta_free_get_next(free_block) == heap->top);
 
-        if (free != NULL)
-            pinta_free_set_next(free, NULL);
+        if (free_block != NULL)
+            pinta_free_set_next(free_block, NULL);
     }
 
     if (count > 0)

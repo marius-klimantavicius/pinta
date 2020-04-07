@@ -103,11 +103,11 @@ extern "C" {
 
 typedef enum PintaFlags
 {
-    PINTA_FLAG_NONE                     = 0x00,
-    PINTA_FLAG_ALIVE                    = 0x10,
-    PINTA_FLAG_ZERO                     = 0x20,
-    PINTA_FLAG_KEEP_ALIVE               = 0x40,
-    PINTA_FLAG_PINNED                   = 0x80
+    PINTA_FLAG_NONE                     = 0x00U,
+    PINTA_FLAG_ALIVE                    = 0x10U,
+    PINTA_FLAG_ZERO                     = 0x20U,
+    PINTA_FLAG_KEEP_ALIVE               = 0x40U,
+    PINTA_FLAG_PINNED                   = 0x80U
 } PintaFlags;
 
 typedef enum PintaKind

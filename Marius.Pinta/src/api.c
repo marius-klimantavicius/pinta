@@ -161,6 +161,9 @@ PINTA_EXIT:
     if (handle != NULL)
         environment->file_close(environment->environment_context, handle);
 
+    if (exception != PINTA_OK)
+        return NULL;
+
     return (void*)domain;
 }
 

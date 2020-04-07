@@ -9,20 +9,20 @@ decimal pinta_soft_multiply32(u32 left, u32 right)
     u32 low;
     u32 high;
 
-    low = (left & 0xFFFF) * (right & 0xFFFF);
+    low = (left & 0xFFFFU) * (right & 0xFFFFU);
 
-    u32 t = low >> 16;
-    low &= 0xFFFF;
-    t += (left >> 16) * (right & 0xFFFF);
-    low += (t & 0xFFFF) << 16;
-    high = t >> 16;
-    t = low >> 16;
-    low &= 0xFFFF;
-    t += (right >> 16) * (left & 0xFFFF);
-    low += (t & 0xFFFF) << 16;
-    high += t >> 16;
-    high += (left >> 16) * (right >> 16);
-    return ((decimal)high << 32) | low;
+    u32 t = low >> 16U;
+    low &= 0xFFFFU;
+    t += (left >> 16U) * (right & 0xFFFFU);
+    low += (t & 0xFFFFU) << 16U;
+    high = t >> 16U;
+    t = low >> 16U;
+    low &= 0xFFFFU;
+    t += (right >> 16U) * (left & 0xFFFFU);
+    low += (t & 0xFFFFU) << 16U;
+    high += t >> 16U;
+    high += (left >> 16U) * (right >> 16U);
+    return ((decimal)high << 32U) | low;
 }
 
 decimal pinta_soft_multiply64(decimal left, decimal right)

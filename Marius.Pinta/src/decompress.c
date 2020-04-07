@@ -37,19 +37,19 @@ void pinta_decompress(u8 *data, u32 length, u8 *destination)
         state->data++;
         if (value == 0xFF)
         {
-            value = (*state->data) | 0x80;
+            value = (*state->data) | 0x80U;
             state->data++;
             state->length--;
 
             *destination = value;
             destination++;
         }
-        else if (value & 0x80)
+        else if (value & 0x80U)
         {
             if (state >= decompressor->stack_end)
                 return;
 
-            length = (value & 0x7F) + 3;
+            length = (value & 0x7FU) + 3;
             offset = *state->data;
 
             state->data++;

@@ -215,7 +215,13 @@ void tcl_free(PintaTclValue *value)
 PintaTclValue *tcl_append_string(PintaTclValue *value, const u8 *buffer, u32 buffer_length)
 {
     u32 n = tcl_length(value);
-    value = realloc(value, n + buffer_length + 1);
+    PintaTclValue* new_value = realloc(value, n + buffer_length + 1);
+    if (!new_value) {
+        tcl_free(value);
+        return NULL;
+    }
+
+    value = new_value;
     memset((u8 *)tcl_string(value) + n, 0, buffer_length + 1);
     strncpy((u8 *)tcl_string(value) + n, buffer, buffer_length);
     return value;

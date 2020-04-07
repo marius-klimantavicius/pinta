@@ -78,3 +78,6 @@
         Make prev a tagged pointer and move discard_result into it (maybe prev is no longer a pointer but an offset to previous frame)
         ? Remove code_start, code_end in favor of a single pointer
         Split PintaStackFrame into simple and extended stack frames - extended stack frame would only be used if function_this, function_closure or return_domain is set
+
+2020-04-07
+    * [*] Replace pinta_assert with some sort of contract to make MSVC (VS2019) happy
