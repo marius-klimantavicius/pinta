@@ -98,7 +98,6 @@ PintaHeapObject *pinta_heap_alloc(PintaHeap *heap, u8 block_kind, u8 block_flags
         return NULL;
 
     next = NULL;
-    available = 0;
     largest = 0;
 
     // find a free block that is at least of requested length

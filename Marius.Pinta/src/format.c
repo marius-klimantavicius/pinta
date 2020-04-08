@@ -335,7 +335,6 @@ PintaException pinta_format_decimal(PintaCore *core, PintaReference *buffer, Pin
     {
         for (index = 0; index < padding_length; index++)
             output[index] = format->pad;
-        output += padding_length;
     }
 
     pinta_buffer_ref_set_position(buffer, pinta_buffer_ref_get_position(buffer) + (string_length + padding_length) * sizeof(wchar));
@@ -390,7 +389,6 @@ PintaException pinta_format_string(PintaCore *core, PintaReference *buffer, Pint
 
         for (index = 0; index < padding_length; index++)
             output[index] = format->pad;
-        output += index;
 
         pinta_buffer_ref_set_position(buffer, pinta_buffer_ref_get_position(buffer) + padding_length * sizeof(wchar));
         PINTA_CHECK(pinta_lib_buffer_write_string(core, buffer, 0, string_length, value));
@@ -408,7 +406,6 @@ PintaException pinta_format_string(PintaCore *core, PintaReference *buffer, Pint
 
             for (index = 0; index < padding_length; index++)
                 output[index] = format->pad;
-            output += index;
 
             pinta_buffer_ref_set_position(buffer, pinta_buffer_ref_get_position(buffer) + padding_length * sizeof(wchar));
         }

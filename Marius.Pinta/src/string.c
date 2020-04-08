@@ -1544,7 +1544,6 @@ PintaException pinta_lib_multistring_append(PintaCore *core, PintaReference *lef
 
     // we have a copy of left in string
     // multistring_alloc_value ensures that there are no NULLs between non-NULLs
-    index = 0;
     for (index = 0; index < PINTA_MULTISTRING_COUNT; index++)
     {
         item = pinta_multistring_ref_get_item(&string, index);
@@ -1631,7 +1630,6 @@ PintaException pinta_lib_multistring_prepend(PintaCore *core, PintaReference *le
 
     // we have a copy of left in string
     // multistring_alloc_value ensures that there are no NULLs between non-NULLs
-    index = 0;
     for (index = 0; index < PINTA_MULTISTRING_COUNT; index++)
     {
         item = pinta_multistring_ref_get_item(&string, index);

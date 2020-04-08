@@ -257,7 +257,6 @@ u32 decimal_to_string(decimal value, wchar *string)
 
     if (fraction == 0)
     {
-        fraction_digit_count = 0;
         fractional_padding_length = 0;
         string_length = is_negative + integral_digit_count;
     }
@@ -289,8 +288,8 @@ u32 decimal_to_string(decimal value, wchar *string)
 
         for (index = 0; index < fractional_padding_length; index++)
             *string++ = PINTA_CHAR('0');
-
-        string += integer_to_string((i32)fraction, string);
+        
+        integer_to_string((i32)fraction, string);
     }
 
     return string_length;
@@ -542,7 +541,6 @@ void pinta_format_decimal_general(decimal value, i32 precision, wchar *string)
         if (integral_digits > 0)
             digits = integral_digits + PINTA_DECIMAL_PRECISION;
 
-        last_digit = 0;
         if (digits > (u32)precision)
         {
             scale = pinta_decimal_powers_of_10[digits - (u32)precision - 1];
@@ -570,7 +568,9 @@ void pinta_format_decimal_general(decimal value, i32 precision, wchar *string)
         {
             exp = exp + (i32)digits - 1;
 
-            scale = pinta_decimal_powers_of_10[digits - 1];
+            scale = 1;
+            if (digits < 20 && digits > 0)
+                scale = pinta_decimal_powers_of_10[digits - 1];
 
             integral = value / scale;
             fraction = value % scale;
@@ -596,7 +596,7 @@ void pinta_format_decimal_general(decimal value, i32 precision, wchar *string)
 
             if (exp < 10 && exp > -10)
                 *string++ = PINTA_CHAR('0');
-            string += integer_to_string(exp, string);
+            integer_to_string(exp, string);
         }
         else
         {
@@ -720,7 +720,6 @@ void pinta_format_decimal_exponential(decimal value, i32 precision, wchar *strin
     if (digits == 0)
         digits = 1;
 
-    last_digit = 0;
     if (digits > (u32)precision)
     {
         scale = pinta_decimal_powers_of_10[digits - (u32)precision - 1];
@@ -781,7 +780,7 @@ void pinta_format_decimal_exponential(decimal value, i32 precision, wchar *strin
     if (exp < 10 && exp > -10)
         *string++ = PINTA_CHAR('0');
 
-    string += integer_to_string(exp, string);
+    integer_to_string(exp, string);
 }
 
 /* DECIMAL ACCESSORS */

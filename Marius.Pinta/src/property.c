@@ -63,8 +63,16 @@ PintaProperty *pinta_property_table_find(PintaProperty *table, u32 table_capacit
     pinta_assert(table != NULL);
     pinta_assert(key != NULL);
 
-    if (table_capacity == 0)
+    if (table_capacity == 0) 
+    {
+        if (result != NULL) 
+        {
+            result->is_valid = 0;
+            result->is_found = 0;
+        }
+
         return NULL;
+    }
 
     hash_index = key_hash_code % table_capacity;
 
@@ -112,8 +120,11 @@ PintaProperty *pinta_property_table_find(PintaProperty *table, u32 table_capacit
         }
     }
 
-    if (result != NULL)
+    if (result != NULL) 
+    {
         result->is_valid = 0;
+        result->is_found = 0;
+    }
 
     return NULL;
 }
@@ -515,8 +526,6 @@ u32 pinta_property_table_walk(PintaHeapObject *object, PintaHeapObjectWalkerStat
                         }
                     }
                 }
-
-                field = 3;
             }
         }
 

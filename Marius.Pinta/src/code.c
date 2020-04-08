@@ -1086,6 +1086,7 @@ PintaException pinta_code_compare(PintaThread *thread, u8 code)
                 compare_result = 1;
             else
                 compare_result = 0;
+            break;
         case PINTA_CODE_COMPARE_LESS_THAN:
             if (decimal_is_negative(pinta_decimal_ref_get_value(&gc.result)) == 1)
                 compare_result = 1;

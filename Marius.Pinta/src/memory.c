@@ -4,7 +4,7 @@ PintaNativeMemory *pinta_memory_init(void *memory, u32 length)
 {
     PintaNativeMemory *result;
     u8 *start = (u8*)memory;
-    u8 *end = &start[length];
+    u8 *end;
     uintptr_t memory_pointer;
 
     if (memory == NULL)
@@ -305,7 +305,6 @@ void pinta_memory_free(PintaNativeMemory *memory, void *item)
         end = &block[block->length];
         if (next != NULL && end == next)
         {
-            block_length = block->length + next->length;
             pinta_memory_remove(memory, next);
         }
 
