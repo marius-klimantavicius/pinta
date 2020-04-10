@@ -40,9 +40,19 @@ extern "C" {
 #define PINTA_UNUSED(x)                 ((void)x)
 
 #if PINTA_DEBUG
+
+// starting VS2019 16.5.3 - code analyzer ignores asserts and polutes VS with warnings about NULL access
+// We use MS extensions __assume(...) to force the analyzer to be happy. Not safe to be used in release builds
+#if defined(_MSC_VER)
+#define pinta_assert(_Expression)       (assert(_Expression), __assume(_Expression))
+#else
 #define pinta_assert(_Expression)       assert(_Expression)
+#endif
+
+#define pinta_fail(message)             assert(0 && message)
 #define PINTA_EXCEPTION(_exception)     (_exception)
 #else
+#define pinta_fail(message)
 #define pinta_assert(_Expression)       
 #define PINTA_EXCEPTION(_exception)     (_exception)
 #endif

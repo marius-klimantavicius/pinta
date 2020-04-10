@@ -157,7 +157,7 @@ void pinta_debug_validate_heap(PintaHeap *heap)
         }
         else
         {
-            pinta_assert(0 && "Unknown object type");
+            pinta_fail("Unknown object type");
             last_alive = current;
         }
     }
@@ -204,7 +204,7 @@ void pinta_gc_sweep(PintaHeap *heap)
         {
 #if PINTA_DEBUG
             block_length = current->block_length;
-            memset(current, 0xDD, sizeof(PintaHeapObject)* block_length);
+            memset(current, 0xDD, sizeof(PintaHeapObject) * block_length);
             current->block_length = block_length;
 #endif
 
@@ -493,6 +493,40 @@ void pinta_gc_relocate(PintaCore *core, PintaHeapReloc *reloc, u32 count)
     }
 }
 
+void pinta_gc_fixup_free_list(PintaHeap *heap)
+{
+    PintaHeapObject *free_block = heap->free;
+    if (free_block == NULL)
+        return;
+
+    // compaction screws the free list (the invariant that last free block is < heap->top might no longer be true), fix it (note that this normally should be very quick unless there are a lot of fragmentation due to pinned objects)
+    if (heap->free >= heap->top)
+        heap->free = NULL;
+
+    free_block = heap->free;
+    while (free_block != NULL && pinta_free_get_next(free_block) < heap->top)
+        free_block = pinta_free_get_next(free_block);
+
+    pinta_assert(free_block == NULL || pinta_free_get_next(free_block) == heap->top);
+
+    if (free_block != NULL)
+        pinta_free_set_next(free_block, NULL);
+}
+
+PintaHeapObject* pinta_gc_find_free_object(PintaHeap *heap, PintaHeapObject *current)
+{
+    PintaHeapObject *free_block = heap->free;
+    while (free_block != NULL && free_block < current)
+    {
+        if (free_block->block_length <= current->block_length || &free_block[free_block->block_length] == current)
+            break;
+
+        free_block = pinta_free_get_next(free_block);
+    }
+
+    return free_block;
+}
+
 void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *reloc, u32 reloc_count)
 {
     u32 count = 0;
@@ -559,14 +593,7 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
             // NOTE that in normal case (without pinned objects) the free space will be a single huge block
             // we will only move downwards
 
-            free_block = heap->free;
-            while (free_block != NULL && free_block < current)
-            {
-                if (free_block->block_length <= current->block_length || &free_block[free_block->block_length] == current)
-                    break;
-
-                free_block = pinta_free_get_next(free_block);
-            }
+            free_block = pinta_gc_find_free_object(heap, current);
 
             // we either found a block big enough to contain current
             // or we reached a free block that is just lower the current
@@ -576,9 +603,6 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
                 current = next;
                 continue;
             }
-
-            if (free_block == NULL)
-                continue;
 
             if ((free_block + free_block->block_length) == current) // (best case) in case we found an adjacent free block, we can ignore the blocks length, we are sure that length(free + current) > length(current)
             {
@@ -604,15 +628,8 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
                 reloc[count].offset = (u32)(current - free_block);
                 count++;
 
-                pinta_assert(free_block != NULL);
-
-#if defined(_MSC_VER)
-#pragma warning (disable:6011)
-#endif
                 free_block = &free_block[free_block->block_length];
-#if defined(_MSC_VER)
-#pragma warning (default:6011)
-#endif
+
                 pinta_free_insert_after(heap, free_before, free_block, available);
                 if (free_block > free_last)
                     free_last = free_block;
@@ -696,21 +713,7 @@ void pinta_gc_compact_worker(PintaCore *core, PintaHeap *heap, PintaHeapReloc *r
     else
         heap->top = heap->start;
 
-    if (heap->free != NULL)
-    {
-        // compaction screws the free list (the invariant that last free block is < heap->top might no longer be true), fix it (note that this normally should be very quick unless there are a lot of fragmentation due to pinned objects)
-        if (heap->free >= heap->top)
-            heap->free = NULL;
-
-        free_block = heap->free;
-        while (free_block != NULL && pinta_free_get_next(free_block) < heap->top)
-            free_block = pinta_free_get_next(free_block);
-
-        pinta_assert(free_block == NULL || pinta_free_get_next(free_block) == heap->top);
-
-        if (free_block != NULL)
-            pinta_free_set_next(free_block, NULL);
-    }
+    pinta_gc_fixup_free_list(heap);
 
     if (count > 0)
         pinta_gc_relocate(core, reloc, count);

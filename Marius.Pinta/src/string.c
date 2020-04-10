@@ -1507,7 +1507,7 @@ PintaException pinta_lib_multistring_to_string(PintaCore *core, PintaReference *
         }
         else
         {
-            pinta_assert(0); // this IS assertion because this case should have been handled before
+            pinta_fail("Multistring supports only string, substring and char"); // this IS assertion because this case should have been handled before
             PINTA_THROW(PINTA_EXCEPTION_ENGINE);
         }
     }

@@ -1943,8 +1943,8 @@ PintaException pinta_lib_buffer_write_string(PintaCore *core, PintaReference *bu
             }
             else
             {
-                pinta_assert(0 && "Multistring supports only string and substring, when changed correct this code");
-                PINTA_THROW(PINTA_EXCEPTION_TYPE_MISMATCH);
+                pinta_fail("Multistring supports only string, substring and char");
+                PINTA_THROW(PINTA_EXCEPTION_ENGINE);
             }
         }
 
