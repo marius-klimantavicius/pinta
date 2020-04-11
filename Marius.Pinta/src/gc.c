@@ -85,7 +85,7 @@ void pinta_gc_mark(PintaCore *core)
     {
         PintaStackFrame *frame;
 
-        for (frame = thread->frame; frame != NULL; frame = frame->prev)
+        for (frame = thread->frame; frame != NULL; frame = pinta_frame_get_prev(frame))
         {
             pinta_gc_mark_object(core, frame->function_this.reference);
             pinta_gc_mark_object(core, frame->function_closure.reference);
@@ -488,12 +488,12 @@ void pinta_gc_relocate(PintaCore *core, PintaHeapReloc *reloc, u32 count)
 
     for (current = core->threads; current != NULL; current = current->next)
     {
-        for (frame = current->frame; frame != NULL; frame = frame->prev)
+        for (frame = current->frame; frame != NULL; frame = pinta_frame_get_prev(frame))
             pinta_gc_relocate_frame(frame, reloc, count);
     }
 }
 
-void pinta_gc_fixup_free_list(PintaHeap *heap)
+static void pinta_gc_fixup_free_list(PintaHeap *heap)
 {
     PintaHeapObject *free_block = heap->free;
     if (free_block == NULL)
@@ -513,7 +513,7 @@ void pinta_gc_fixup_free_list(PintaHeap *heap)
         pinta_free_set_next(free_block, NULL);
 }
 
-PintaHeapObject* pinta_gc_find_free_object(PintaHeap *heap, PintaHeapObject *current)
+static PintaHeapObject* pinta_gc_find_free_object(PintaHeap *heap, PintaHeapObject *current)
 {
     PintaHeapObject *free_block = heap->free;
     while (free_block != NULL && free_block < current)

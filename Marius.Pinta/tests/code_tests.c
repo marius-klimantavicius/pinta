@@ -894,6 +894,19 @@ PINTA_TEST_BEGIN(code_subtract_two_strings, 1)
 }
 PINTA_TEST_END(PINTA_OK)
 
+PINTA_TEST_BEGIN(code_compare_numbers, 1)
+{
+    PintaModuleDomain *domain;
+    core->internal_functions = (PintaCoreInternalFunction*)pinta_memory_alloc(core->memory, 1 * sizeof(PintaCoreInternalFunction));
+    core->internal_functions_length = 1;
+
+    core->internal_functions[0] = pinta_test_internal_assert;
+
+    PINTA_CHECK(pinta_test_load_module(core, PINTA_TEST_FILE("compare-numbers.pint"), &domain));
+    PINTA_CHECK(pinta_code_execute_module(core, domain));
+}
+PINTA_TEST_END(PINTA_OK)
+
 void pinta_tests_code()
 {
     sput_enter_suite("Code tests");
@@ -910,5 +923,6 @@ void pinta_tests_code()
     sput_run_test(code_sub_buffer_outline);
     sput_run_test(code_string_operations_with_globals);
     sput_run_test(code_subtract_two_strings);
+    sput_run_test(code_compare_numbers);
     sput_leave_suite();
 }

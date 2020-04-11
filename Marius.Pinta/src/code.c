@@ -6,13 +6,14 @@ void pinta_debug_assert_code(PintaThread *thread)
     u8 found = 0;
     PintaModuleDomain *current_domain;
     PintaThread *current_thread;
+    u32 is_final;
 
     pinta_assert(thread != NULL);
     pinta_assert(thread->core != NULL);
     pinta_assert(thread->core->heap != NULL);
     pinta_assert(thread->core->threads != NULL);
+    pinta_assert(thread->frame != NULL);
 
-    pinta_assert(thread->frame->is_final_frame || thread->domain != NULL);
     pinta_assert(thread->domain == NULL || thread->domain->module != NULL);
 
     if (thread->core->domains && thread->domain)
@@ -42,10 +43,12 @@ void pinta_debug_assert_code(PintaThread *thread)
     pinta_assert(found && "Core contains current thread");
 
     pinta_assert(thread->frame != NULL);
-    pinta_assert(thread->frame->is_final_frame || thread->code_pointer != NULL);
 
-    pinta_assert(thread->frame->is_final_frame || thread->code_pointer >= thread->frame->code_start);
-    pinta_assert(thread->frame->is_final_frame || thread->code_pointer < thread->frame->code_end);
+    is_final = pinta_frame_get_is_final(thread->frame);
+
+    pinta_assert(is_final || thread->code_pointer != NULL);
+    pinta_assert(is_final || thread->code_pointer >= thread->frame->code_start);
+    pinta_assert(is_final || thread->code_pointer < thread->frame->code_end);
 }
 #endif /* PINTA_DEBUG */
 
@@ -69,7 +72,7 @@ u32 pinta_code_is_tail_call(PintaThread *thread)
     if (code < frame->code_start || code >= frame->code_end)
         return 0;
 
-    if (frame->discard_result)
+    if (pinta_frame_get_discard_result(frame))
         return 0;
 
     if (!pinta_frame_stack_is_empty(frame))
@@ -78,7 +81,7 @@ u32 pinta_code_is_tail_call(PintaThread *thread)
     /*
     Check for (NOP* RET), max 4 codes
     */
-    for (; code < frame->code_end && code - thread->code_next_pointer < 4; code++) 
+    for (; code < frame->code_end && code - thread->code_next_pointer < 4; code++)
     {
         if (*code == PINTA_CODE_RETURN)
             return 1;
@@ -1351,7 +1354,7 @@ PintaException pinta_code_call(PintaThread *thread, u32 token, u32 arguments_cou
         PINTA_CHECK(pinta_lib_frame_push(thread));
 
     frame = thread->frame;
-    frame->discard_result = 0;
+    pinta_frame_set_discard_result(frame, 0);
     frame->function_this.reference = NULL;
     frame->function_closure.reference = NULL;
     frame->function_arguments.reference = gc.arguments.reference;
@@ -1360,9 +1363,9 @@ PintaException pinta_code_call(PintaThread *thread, u32 token, u32 arguments_cou
     frame->code_start = function->code_start;
     frame->code_end = function->code_end;
 
-    if (!is_tail_call) 
+    if (!is_tail_call)
         frame->return_address = thread->code_next_pointer;
-    
+
     thread->code_next_pointer = function->code_start;
     thread->code_pointer = function->code_start;
 
@@ -1425,8 +1428,8 @@ PintaException pinta_code_return(PintaThread *thread)
     PintaException exception = PINTA_OK;
     PintaCore *core;
     u8 *return_address;
-    u8 discard_result;
-    u8 is_final_frame;
+    u32 discard_result;
+    u32 is_final_frame;
     PintaModuleDomain *return_domain;
     PintaReference value;
 
@@ -1438,8 +1441,8 @@ PintaException pinta_code_return(PintaThread *thread)
     pinta_debug_raise_before_return(thread);
 
     return_address = thread->frame->return_address;
-    discard_result = thread->frame->discard_result;
-    is_final_frame = thread->frame->is_final_frame;
+    discard_result = pinta_frame_get_discard_result(thread->frame);
+    is_final_frame = pinta_frame_get_is_final(thread->frame);
     return_domain = thread->frame->return_domain;
 
     PINTA_CHECK(pinta_lib_stack_pop(thread, &value));
@@ -1448,7 +1451,7 @@ PintaException pinta_code_return(PintaThread *thread)
     if (return_domain != NULL)
         thread->domain = return_domain;
 
-    if (!is_final_frame && (thread->frame == NULL || thread->frame->is_final_frame))
+    if (!is_final_frame && (thread->frame == NULL || pinta_frame_get_is_final(thread->frame)))
         is_final_frame = 1;
 
     if (is_final_frame)
@@ -2025,7 +2028,7 @@ PintaException pinta_code_invoke_function_managed(PintaThread *thread, u32 argum
     frame = thread->frame;
 
     frame->return_domain = thread->domain;
-    frame->discard_result = 0;
+    pinta_frame_set_discard_result(frame, 0);
     frame->function_this.reference = gc.function_this.reference;
     frame->function_closure.reference = gc.function_closure.reference;
     frame->function_arguments.reference = gc.function_arguments.reference;
@@ -2359,7 +2362,7 @@ PintaException pinta_code_construct_function(PintaThread *thread, u32 arguments_
     frame = thread->frame;
 
     frame->return_domain = thread->domain;
-    frame->discard_result = 1;
+    pinta_frame_set_discard_result(frame, 1);
     frame->function_this.reference = gc.object_instance.reference;
     frame->function_closure.reference = gc.function_closure.reference;
     frame->function_arguments.reference = gc.function_arguments.reference;

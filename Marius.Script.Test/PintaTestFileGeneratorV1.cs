@@ -388,6 +388,32 @@ assertEqual(1, result, '\'9\' - \'0\' == 9');
 ", filename, _defaultInternalFunctions);
         }
 
+        public static void CompareNumbers(string filename)
+        {
+            SaveScriptTestFile(@"
+var a = -100, b = 10, c = 100;
+
+assertEqual(0, a > b, 'Integer a > b');
+assertEqual(1, b > a, 'Integer b > a');
+
+assertEqual(0, b < a, 'Integer a > b');
+assertEqual(1, a < b, 'Integer a > b');
+
+assertEqual(0, a == b, 'Integer a == b');
+
+a = -100.1, b = 10.1, c = 100.1;
+
+assertEqual(0, a > b, 'Decimal a > b');
+assertEqual(1, b > a, 'Decimal b > a');
+
+assertEqual(0, b < a, 'Decimal a > b');
+assertEqual(1, a < b, 'Decimal a > b');
+
+assertEqual(0, a == b, 'Decimal a == b');
+
+", filename, _defaultInternalFunctions);
+        }
+
         private static void SaveScriptTestFile(string source, string filename, object internalFunctions)
         {
             var compiler = new PintaCompiler(_emitBigEndian);

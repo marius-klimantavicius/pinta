@@ -32,7 +32,8 @@ namespace Marius.Script.Test
             PintaTestFileGeneratorV1.UnicodeOutline("unicode-outline.pint");
             PintaTestFileGeneratorV1.SubBufferOutline("sub-buffer.pint");
             PintaTestFileGeneratorV1.StringOperationsWithGlobalVariables("string-operations-with-global-variables.pint");
-            PintaTestFileGeneratorV2.SubtractTwoStrings("subtract-two-strings.pint");
+            PintaTestFileGeneratorV1.SubtractTwoStrings("subtract-two-strings.pint");
+            PintaTestFileGeneratorV1.CompareNumbers("compare-numbers.pint");
 
             PintaTestFileGeneratorV2.ArraySum("array-sum-v2.pint");
             PintaTestFileGeneratorV2.LoadConstants("load-const-v2.pint");
@@ -60,6 +61,8 @@ namespace Marius.Script.Test
             PintaTestFileGeneratorV2.SubtractTwoStrings("subtract-two-strings-v2.pint");
             PintaTestFileGeneratorV2.TailCallSimple("tail-call-simple.pint");
             PintaTestFileGeneratorV2.TailCallInvoke("tail-call-invoke.pint");
+            PintaTestFileGeneratorV2.TailCallInvoke("tail-call-invoke.pint");
+            PintaTestFileGeneratorV2.CompareNumbers("compare-numbers-v2.pint");
 
             PintaSampleFileGenerator.Sample();
         }

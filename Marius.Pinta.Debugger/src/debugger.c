@@ -279,7 +279,7 @@ void pinta_debugger_send_frame_stack(PintaCore *core, PintaWebContext *context, 
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -319,7 +319,7 @@ void pinta_debugger_send_frame_this(PintaCore *core, PintaWebContext *context, u
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -356,7 +356,7 @@ void pinta_debugger_send_frame_arguments(PintaCore *core, PintaWebContext *conte
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -393,7 +393,7 @@ void pinta_debugger_send_frame_locals(PintaCore *core, PintaWebContext *context,
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -430,7 +430,7 @@ void pinta_debugger_send_frame_closure(PintaCore *core, PintaWebContext *context
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 
@@ -467,7 +467,7 @@ void pinta_debugger_send_frame_body(PintaCore *core, PintaWebContext *context, u
     PintaJsonWriter writer = pinta_debugger_get_writer(context);
 
     while (index-- != 0 && frame != NULL)
-        frame = frame->prev;
+        frame = pinta_frame_get_prev(frame);
 
     pinta_web_context_frame_begin(context, PINTA_WEB_WSOP_TEXT_FRAME);
 

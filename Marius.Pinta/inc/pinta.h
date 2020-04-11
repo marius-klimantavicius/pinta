@@ -41,13 +41,15 @@ extern "C" {
 
 #if PINTA_DEBUG
 
-// starting VS2019 16.5.3 - code analyzer ignores asserts and polutes VS with warnings about NULL access
-// We use MS extensions __assume(...) to force the analyzer to be happy. Not safe to be used in release builds
+/*
+ starting VS2019 16.5.3 - code analyzer ignores asserts and polutes VS with warnings about NULL access
+ We use MS extensions __assume(...) to force the analyzer to be happy. Not safe to be used in release builds
+*/
 #if defined(_MSC_VER)
 #define pinta_assert(_Expression)       (assert(_Expression), __assume(_Expression))
 #else
 #define pinta_assert(_Expression)       assert(_Expression)
-#endif
+#endif /* defined(_MSC_VER) */
 
 #define pinta_fail(message)             assert(0 && message)
 #define PINTA_EXCEPTION(_exception)     (_exception)
@@ -55,7 +57,7 @@ extern "C" {
 #define pinta_fail(message)
 #define pinta_assert(_Expression)       
 #define PINTA_EXCEPTION(_exception)     (_exception)
-#endif
+#endif /* PINTA_DEBUG */
 
 #define pinta_trace0(message)               ((void)0)
 #define pinta_trace1(format, arg0)          ((void)0)
@@ -95,7 +97,7 @@ extern "C" {
 #define PINTA_CHECK(x)                  do { if ((exception = (x)) != PINTA_OK) { goto PINTA_EXIT; } } while(0)
 #define PINTA_THROW(x)                  do { exception = (x); goto PINTA_EXIT; } while(0)
 #define PINTA_RETURN()                  do { exception = PINTA_OK; goto PINTA_EXIT; } while(0)
-#endif // defined(_MSC_VER)
+#endif /* defined(_MSC_VER) */
 
 #define PINTA_DECIMAL_DIGITS            25
 #define PINTA_DECIMAL_SCALE             100000000LL
@@ -389,6 +391,11 @@ static const u8 PINTA_CODE_MATCH_TYPE_MASK = 0xF0;
 static const u8 PINTA_CODE_MATCH_TYPE_BITS = 4;
 static const u8 PINTA_CODE_MATCH_ARGUMENTS_MASK = 0x0F;
 static const u8 PINTA_CODE_MATCH_ARGUMENTS_BITS = 4;
+
+static const u32 PINTA_FRAME_IS_FINAL = 0x80000000;
+static const u32 PINTA_FRAME_DISCARD_RESULT = 0x40000000;
+
+static const u32 PINTA_FRAME_PREV_OFFSET = 0x3FFFFFFF;
 
 // heap block represents single entry in heap
 struct PintaInteger
@@ -713,18 +720,12 @@ struct PintaHeapHandle
 
 struct PintaStackFrame
 {
-    PintaStackFrame *prev;
+    u32 prev_offset_flags; // Not safe for 64-bits (>1GB stack sizes), use uintptr?
 
     u8 *return_address;
 
     u8 *code_start;
     u8 *code_end;
-
-    // Store in prev as tagged pointer? where to put size then? we have only two bits in pointer (aligned to 4 in 32 bit case)
-    u8 is_final_frame;
-    u8 discard_result;
-    u8 padding_1;
-    u8 padding_2;
 
     PintaReference *stack_start;
     PintaReference *stack;
@@ -1781,6 +1782,15 @@ PintaException      pinta_code_rt_require(PintaCore *core, PintaThread *thread, 
 // ***********************************************
 // Stack
 // ***********************************************
+
+PintaStackFrame    *pinta_frame_get_prev(PintaStackFrame *frame);
+void                pinta_frame_set_prev(PintaStackFrame *result, PintaStackFrame *frame);
+
+u32                 pinta_frame_get_is_final(PintaStackFrame *frame);
+void                pinta_frame_set_is_final(PintaStackFrame *frame, u32 is_final);
+
+u32                 pinta_frame_get_discard_result(PintaStackFrame *frame);
+void                pinta_frame_set_discard_result(PintaStackFrame *frame, u32 discard_result);
 
 PintaException      pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, u32 length_in_bytes);
 

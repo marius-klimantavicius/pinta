@@ -1,5 +1,78 @@
 #include "pinta.h"
 
+PintaStackFrame *pinta_frame_get_prev(PintaStackFrame *frame)
+{
+    PintaReference *prev;
+    u32 prev_offset = 0;
+
+    if (frame == NULL)
+        return NULL;
+
+    prev_offset = frame->prev_offset_flags & PINTA_FRAME_PREV_OFFSET;
+    if (prev_offset == 0)
+        return NULL;
+
+    prev = (PintaReference*)frame;
+    prev = prev - prev_offset;
+    return (PintaStackFrame *)prev;
+}
+
+void pinta_frame_set_prev(PintaStackFrame *result, PintaStackFrame *frame)
+{
+    PintaReference *start = (PintaReference*)frame;
+    PintaReference *end = (PintaReference*)result;
+    u32 offset;
+
+    pinta_assert(result != NULL);
+    pinta_assert(frame != NULL);
+
+    offset = end - start;
+
+    pinta_assert(offset <= PINTA_FRAME_PREV_OFFSET); // Will fail if it is used with stack > 1GB
+
+    result->prev_offset_flags |= offset;
+}
+
+u32 pinta_frame_get_is_final(PintaStackFrame *frame)
+{
+    pinta_assert(frame != NULL);
+
+    if ((frame->prev_offset_flags & PINTA_FRAME_IS_FINAL) != 0)
+        return 1;
+
+    return 0;
+}
+
+void pinta_frame_set_is_final(PintaStackFrame *frame, u32 is_final)
+{
+    pinta_assert(frame != NULL);
+
+    if (is_final)
+        frame->prev_offset_flags |= PINTA_FRAME_IS_FINAL;
+    else
+        frame->prev_offset_flags &= ~(PINTA_FRAME_IS_FINAL);
+}
+
+u32 pinta_frame_get_discard_result(PintaStackFrame *frame)
+{
+    pinta_assert(frame != NULL);
+
+    if ((frame->prev_offset_flags & PINTA_FRAME_DISCARD_RESULT) != 0)
+        return 1;
+
+    return 0;
+}
+
+void pinta_frame_set_discard_result(PintaStackFrame *frame, u32 discard_result)
+{
+    pinta_assert(frame != NULL);
+
+    if (discard_result)
+        frame->prev_offset_flags |= PINTA_FRAME_DISCARD_RESULT;
+    else
+        frame->prev_offset_flags &= ~(PINTA_FRAME_DISCARD_RESULT);
+}
+
 PintaException pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, u32 length_in_bytes)
 {
     u8 *stack_start, *stack_end;
@@ -15,7 +88,7 @@ PintaException pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, 
 
     stack_start = (u8*)&frame[1];
     stack_end = ((u8*)frame) + (sizeof(PintaStackFrame) + length_in_bytes);
-    
+
     thread->stack_end = (PintaReference*)stack_end;
 
     frame->return_address = NULL;
@@ -27,15 +100,10 @@ PintaException pinta_frame_init(PintaThread *thread, PintaNativeMemory *memory, 
     frame->function_closure.reference = NULL;
     frame->function_arguments.reference = NULL;
     frame->function_locals.reference = NULL;
-    frame->prev = NULL;
-    frame->is_final_frame = 0;
-    frame->discard_result = 0;
+    frame->prev_offset_flags = PINTA_FRAME_IS_FINAL;
     frame->return_domain = NULL;
 
     thread->frame = frame;
-    thread->frame->code_end = NULL;
-    thread->frame->code_start = NULL;
-    thread->frame->is_final_frame = 1;
 
     return PINTA_OK;
 }
@@ -87,9 +155,6 @@ PintaException pinta_lib_frame_push(PintaThread *thread)
     if (stack >= thread->stack_end)
         return PINTA_EXCEPTION_STACK_OVERFLOW;
 
-    result->is_final_frame = 0;
-    result->discard_result = 0;
-
     result->return_domain = NULL;
 
     result->function_this.reference = NULL;
@@ -102,7 +167,12 @@ PintaException pinta_lib_frame_push(PintaThread *thread)
     result->stack_start = stack;
     result->stack = &stack[-1];
 
-    result->prev = frame;
+    result->code_end = NULL;
+    result->code_start = NULL;
+
+    result->prev_offset_flags = 0;
+    pinta_frame_set_prev(result, frame);
+
     thread->frame = result;
 
     return PINTA_OK;
@@ -117,11 +187,11 @@ PintaException pinta_lib_frame_pop(PintaThread *thread)
     pinta_assert(thread->frame != NULL);
 
     frame = thread->frame;
-    result = frame->prev;
+    result = pinta_frame_get_prev(frame);
     if (result == NULL)
         return PINTA_EXCEPTION_STACK_UNDERFLOW;
 
-    frame->prev = NULL;
+    frame->prev_offset_flags = 0;
     thread->frame = result;
 
     return PINTA_OK;

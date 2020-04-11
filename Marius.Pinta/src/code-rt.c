@@ -86,7 +86,7 @@ PintaException pinta_code_rt_require(PintaCore *core, PintaThread *thread, Pinta
     PINTA_CHECK(pinta_lib_stack_push(thread, &gc.start_function));
     PINTA_CHECK(pinta_code_invoke(thread, 0, 0));
 
-    thread->frame->discard_result = 1;
+    pinta_frame_set_discard_result(thread->frame, 1);
 
     if (discard_return_value)
         *discard_return_value = 1;
