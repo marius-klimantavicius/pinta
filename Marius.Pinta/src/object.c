@@ -67,7 +67,7 @@ void pinta_object_ref_set_prototype(PintaReference *reference, PintaReference *o
     pinta_assert(reference != NULL);
     pinta_assert(object_prototype != NULL);
 
-    pinta_object_set_body(reference->reference, object_prototype->reference);
+    pinta_object_set_prototype(reference->reference, object_prototype->reference);
 }
 
 /* OBJECT */

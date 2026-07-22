@@ -266,7 +266,7 @@ PintaException pinta_format_decimal(PintaCore *core, PintaReference *buffer, Pin
 
     PINTA_CHECK(pinta_lib_buffer_ensure_write(core, buffer, (string_length + padding_length) * sizeof(wchar)));
 
-    // unsafe to call any of allocation functions until output is in use
+    // unsafe to call any of allocation functions while output is in use
     blob = pinta_buffer_ref_get_blob(buffer);
     output = (wchar*)(pinta_blob_get_data(blob) + pinta_buffer_ref_get_position(buffer)); // there should be no alignment issues as this function is called only from format function
 
@@ -383,7 +383,7 @@ PintaException pinta_format_string(PintaCore *core, PintaReference *buffer, Pint
 
     if (!format->is_right_padding && padding_length != 0)
     {
-        // unsafe to call any of allocation functions until output is in use
+        // unsafe to call any of allocation functions while output is in use
         blob = pinta_buffer_ref_get_blob(buffer);
         output = (wchar*)(pinta_blob_get_data(blob) + pinta_buffer_ref_get_position(buffer)); // there should be no alignment issues as this function is called only from format function
 
@@ -400,7 +400,7 @@ PintaException pinta_format_string(PintaCore *core, PintaReference *buffer, Pint
 
         if (format->is_right_padding && padding_length != 0)
         {
-            // unsafe to call any of allocation functions until output is in use
+            // unsafe to call any of allocation functions while output is in use
             blob = pinta_buffer_ref_get_blob(buffer);
             output = (wchar*)(pinta_blob_get_data(blob) + pinta_buffer_ref_get_position(buffer)); // there should be no alignment issues as this function is called only from format function
 
