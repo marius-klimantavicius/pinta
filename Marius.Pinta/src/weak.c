@@ -122,6 +122,8 @@ PintaHeapObject *pinta_weak_alloc_object_value(PintaCore *core, PintaReference *
     pinta_assert(core != NULL);
 
     result = pinta_core_alloc(core, PINTA_KIND_WEAK, PINTA_FLAG_NONE, 1);
+    if (result == NULL)
+        return NULL;
 
     if (target != NULL)
         pinta_weak_set_target(result, target->reference);

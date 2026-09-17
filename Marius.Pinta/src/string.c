@@ -546,6 +546,8 @@ PintaHeapObject *pinta_string_alloc_object_value(PintaCore *core, wchar *data, u
 #endif
 
     result = pinta_core_alloc(core, PINTA_KIND_STRING, PINTA_FLAG_NONE, 1);
+    if (result == NULL)
+        return NULL;
 
     pinta_string_set_length(result, length);
     pinta_string_set_data(result, data);
@@ -1906,7 +1908,7 @@ PintaException pinta_lib_multistring_debug_write(PintaCore *core, PintaReference
 
     if (value->reference == NULL)
         return pinta_json_write_null(core, writer);
-    
+
     PINTA_GC_ENTER(core, string);
 
     PINTA_CHECK(pinta_lib_multistring_to_string(core, value, &string));
@@ -1948,6 +1950,9 @@ PintaHeapObject *pinta_char_alloc_object_value(PintaCore *core, wchar value)
         return &core->cache->chars[value];
 
     result = pinta_core_alloc(core, PINTA_KIND_CHAR, PINTA_FLAG_NONE, 1);
+    if (result == NULL)
+        return NULL;
+
     pinta_char_set_value(result, value);
 
     return result;

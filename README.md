@@ -14,6 +14,9 @@ The execution engine was created for embedded devices with the following require
 
 Currently it is used by incorporating core files directly into the project (both for execution engine and parser/compiler).
 
+Tests must be executed from Marius.Pinta directory (working directory = Marius.Pinta) as test resource location has been
+harcoded to be in `../Marius.Pinta.Test.Files`.
+
 Code from the following projects were used:
 
 - ECMAScript parser from https://github.com/sebastienros/jint (BSD 2-Clause License)

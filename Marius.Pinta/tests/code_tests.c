@@ -1,6 +1,6 @@
 ﻿#include "pinta_tests.h"
 
-#define PINTA_TEST_FILE(name)   (L"..\\Marius.Pinta.Test.Files\\" L##name)
+#define PINTA_TEST_FILE(name)   (L"../Marius.Pinta.Test.Files/" L##name)
 
 PintaException pinta_test_load_module(PintaCore *core, wchar *filename, PintaModuleDomain **result)
 {

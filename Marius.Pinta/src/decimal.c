@@ -288,7 +288,7 @@ u32 decimal_to_string(decimal value, wchar *string)
 
         for (index = 0; index < fractional_padding_length; index++)
             *string++ = PINTA_CHAR('0');
-        
+
         integer_to_string((i32)fraction, string);
     }
 
@@ -840,6 +840,10 @@ PintaHeapObject *pinta_decimal_alloc_object(PintaCore *core)
     pinta_assert(core != NULL);
 
     result = pinta_core_alloc(core, PINTA_KIND_DECIMAL, PINTA_FLAG_NONE, 1);
+    if (result == NULL)
+        return NULL;
+
+    pinta_decimal_set_value(result, 0);
 
     return result;
 }
